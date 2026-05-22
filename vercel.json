@@ -1,4 +1,7 @@
 {
+  "buildCommand": null,
+  "outputDirectory": "public",
+  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
