@@ -888,15 +888,19 @@
       }
 
       // ===== Gerar o $(customapi ...) =====
-      // Formato: $(customapi PUUID?msg="template")
-      // Mas StreamElements consome a URL completa, então: $(customapi BASE/cmd/tft/PUUID?msg=...&mode=...&lang=...)
+      // Formato sempre com ?msg="template" para ficar editável depois
+      // $(customapi BASE/cmd/tft/PUUID?msg="(player) está (rank) com (pontos) pontos")
       const base = window.location.origin; // https://www.asrus.app
+      const effectiveTpl = tpl || (currentLang === 'pt'
+        ? '(player) está (rank) com (pontos) pontos'
+        : '(player) is (rank) with (pontos) points');
+
       const params = new URLSearchParams();
-      if (tpl) params.set('msg', tpl);
+      params.set('msg', effectiveTpl);
       if (mode !== 'tft') params.set('mode', mode);
       if (currentLang !== 'pt') params.set('lang', currentLang);
 
-      const url = `${base}/cmd/tft/${currentPuuid}${params.toString() ? '?' + params.toString() : ''}`;
+      const url = `${base}/cmd/tft/${currentPuuid}?${params.toString()}`;
       const fullCommand = `$(customapi ${url})`;
 
       document.getElementById('commandCode').textContent = fullCommand;
