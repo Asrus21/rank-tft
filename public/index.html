@@ -888,19 +888,26 @@
       }
 
       // ===== Gerar o $(customapi ...) =====
-      // Formato sempre com ?msg="template" para ficar editável depois
-      // $(customapi BASE/cmd/tft/PUUID?msg="(player) está (rank) com (pontos) pontos")
+      // URL "clean" — só escapa caracteres que realmente quebram a URL (# & ? +).
+      // Parênteses, espaços e acentos ficam crus para legibilidade.
       const base = window.location.origin; // https://www.asrus.app
       const effectiveTpl = tpl || (currentLang === 'pt'
         ? '(player) está (rank) com (pontos) pontos'
         : '(player) is (rank) with (pontos) points');
 
-      const params = new URLSearchParams();
-      params.set('msg', effectiveTpl);
-      if (mode !== 'tft') params.set('mode', mode);
-      if (currentLang !== 'pt') params.set('lang', currentLang);
+      // Encoding mínimo: só os caracteres que mudam o sentido da URL
+      const cleanEncode = (s) => s
+        .replace(/%/g, '%25')   // primeiro o % pra não duplicar escape
+        .replace(/#/g, '%23')
+        .replace(/&/g, '%26')
+        .replace(/\?/g, '%3F')
+        .replace(/\+/g, '%2B');
 
-      const url = `${base}/cmd/tft/${currentPuuid}?${params.toString()}`;
+      const parts = [`msg="${cleanEncode(effectiveTpl)}"`];
+      if (mode !== 'tft') parts.push(`mode=${mode}`);
+      if (currentLang !== 'pt') parts.push(`lang=${currentLang}`);
+
+      const url = `${base}/cmd/tft/${currentPuuid}?${parts.join('&')}`;
       const fullCommand = `$(customapi ${url})`;
 
       document.getElementById('commandCode').textContent = fullCommand;
