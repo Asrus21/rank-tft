@@ -425,7 +425,11 @@ app.get('/cmd/tft/:puuid', async (req, res) => {
 
   try {
     const { puuid } = req.params;
-    const rawMsg = req.query.msg ? String(req.query.msg) : '';
+    let rawMsg = req.query.msg ? String(req.query.msg) : '';
+    // Remove aspas externas: msg="texto" → texto (frontend manda com aspas para legibilidade)
+    if (rawMsg.length >= 2 && rawMsg.startsWith('"') && rawMsg.endsWith('"')) {
+      rawMsg = rawMsg.slice(1, -1);
+    }
     const mode = ['tft', 'tft_double_up', 'tft_turbo'].includes(req.query.mode) ? req.query.mode : 'tft';
     const lang = req.query.lang === 'en' ? 'en' : 'pt';
 
