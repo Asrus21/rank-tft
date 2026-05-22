@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rank TFT — asrus.app</title>
+  <link rel="icon" href="https://www.asrus.app/portifolio/favicon.ico" />
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg-2: #111827;
+      --panel: #151c2c;
+      --panel-2: #1c2538;
+      --border: #2a3450;
+      --text: #e6e9f2;
+      --muted: #8892b0;
+      --accent: #d4a253;
+      --accent-2: #f5c97a;
+      --accent-glow: rgba(212, 162, 83, 0.25);
+      --success: #5ddb8c;
+      --danger: #ff6b6b;
+      --info: #6ab7ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 20% 10%, rgba(212, 162, 83, 0.08), transparent 50%),
+        radial-gradient(circle at 80% 90%, rgba(106, 183, 255, 0.05), transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 80px 20px 40px;
+    }
+
+    /* ============================================
+       TOP BAR — Botão portfólio (canto sup. esq.) + Lang toggle
+       ============================================ */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .home-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .home-btn:hover {
+      background: var(--panel-2);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .home-btn img {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+    }
+
+    .lang-toggle {
+      display: flex;
+      gap: 6px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+    }
+    .lang-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      color: #0a0e1a;
+    }
+
+    /* ============================================
+       LAYOUT
+       ============================================ */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .hero h1 {
+      font-size: 38px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .panel-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      background: var(--accent);
+      color: #0a0e1a;
+      border-radius: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .panel-body { padding: 22px; }
+
+    /* ============================================
+       SEARCH MODE TABS
+       ============================================ */
+    .search-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: var(--bg-2);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 18px;
+    }
+    .search-tab {
+      padding: 10px 14px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .search-tab.active {
+      background: var(--accent);
+      color: #0a0e1a;
+    }
+
+    /* ============================================
+       FORM ELEMENTS
+       ============================================ */
+    .form-group { margin-bottom: 14px; }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      transition: border 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    textarea { resize: vertical; min-height: 70px; font-family: 'Consolas', 'Monaco', monospace; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: #0a0e1a;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--accent-glow); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .btn-secondary:hover { background: var(--border); }
+
+    /* ============================================
+       RESULT BOX (UUID / PUUID)
+       ============================================ */
+    .result-box {
+      display: none;
+      margin-top: 16px;
+      padding: 14px;
+      background: var(--bg-2);
+      border: 1px solid var(--success);
+      border-radius: 10px;
+      animation: fadeIn 0.3s;
+    }
+    .result-box.show { display: block; }
+    .result-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--success);
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .result-code {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .result-code code {
+      flex: 1;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      color: var(--accent-2);
+      word-break: break-all;
+    }
+    .copy-btn {
+      padding: 6px 12px;
+      background: var(--accent);
+      color: #0a0e1a;
+      border: none;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { background: var(--accent-2); }
+    .player-info {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .player-info strong { color: var(--text); }
+
+    /* ============================================
+       VARIABLES (clickable chips)
+       ============================================ */
+    .vars-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .var-chip {
+      padding: 5px 10px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 11px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      color: var(--info);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .var-chip:hover {
+      background: var(--info);
+      color: var(--bg);
+      transform: translateY(-1px);
+    }
+
+    /* ============================================
+       PREVIEW & COMMAND OUTPUT
+       ============================================ */
+    .preview-box {
+      display: none;
+      margin-top: 16px;
+      animation: fadeIn 0.3s;
+    }
+    .preview-box.show { display: block; }
+
+    .chat-mock {
+      background: #18181b;
+      border: 1px solid #2d2d35;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    .chat-mock-header {
+      font-size: 11px;
+      color: #8a8a99;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .chat-line {
+      color: #efeff1;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .chat-line .bot {
+      color: #d4a253;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    .command-output {
+      background: var(--bg-2);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .command-output-label {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .command-output-code {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .command-output-code code {
+      flex: 1;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 11px;
+      color: var(--accent-2);
+      word-break: break-all;
+    }
+
+    /* ============================================
+       ALERTS
+       ============================================ */
+    .alert {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      padding: 12px 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      max-width: 360px;
+      z-index: 200;
+      animation: slideIn 0.3s;
+    }
+    .alert.success { border-color: var(--success); }
+    .alert.error { border-color: var(--danger); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ============================================
+       FOOTER (Riot disclaimer)
+       ============================================ */
+    footer {
+      max-width: 1280px;
+      margin: 40px auto 0;
+      padding: 20px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================
+       TOP BAR
+       ============================================ -->
+  <div class="topbar">
+    <a href="https://www.asrus.app/portifolio" class="home-btn" id="homeBtn">
+      <img src="https://www.asrus.app/portifolio/favicon.ico" alt="" onerror="this.style.display='none'" />
+      <span data-i18n="home">Portfólio</span>
+    </a>
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="pt" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- HERO -->
+    <div class="hero">
+      <h1>♟️ Rank TFT</h1>
+      <p data-i18n="hero_desc">Comandos customizados para exibir o seu rank de Teamfight Tactics em tempo real na Twitch</p>
+    </div>
+
+    <div class="grid">
+
+      <!-- ============================================
+           ESQUERDA: SEARCH
+           ============================================ -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title" data-i18n="search_title">Buscar Jogador</div>
+          <div class="panel-badge" data-i18n="step01">PASSO 01</div>
+        </div>
+        <div class="panel-body">
+
+          <!-- Search mode tabs -->
+          <div class="search-tabs">
+            <div class="search-tab active" data-search-mode="register" onclick="setSearchMode('register')" data-i18n="search_register">Nick + Tag</div>
+            <div class="search-tab" data-search-mode="puuid" onclick="setSearchMode('puuid')" data-i18n="search_puuid">PUUID</div>
+          </div>
+
+          <!-- FORM -->
+          <div class="row">
+            <div class="form-group">
+              <label data-i18n="lbl_nick">Nick</label>
+              <input type="text" id="gameName" placeholder="ex: asrus" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="lbl_tag">Tag</label>
+              <input type="text" id="tagLine" placeholder="ex: BR1" autocomplete="off" maxlength="5" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="lbl_region">Região</label>
+            <select id="region">
+              <option value="br1">Brasil (BR1)</option>
+              <option value="na1">North America (NA1)</option>
+              <option value="la1">LAN — Latin America North (LA1)</option>
+              <option value="la2">LAS — Latin America South (LA2)</option>
+              <option value="euw1">Europe West (EUW1)</option>
+              <option value="eun1">Europe Nordic &amp; East (EUN1)</option>
+              <option value="tr1">Turkey (TR1)</option>
+              <option value="ru">Russia (RU)</option>
+              <option value="me1">Middle East (ME1)</option>
+              <option value="kr">Korea (KR)</option>
+              <option value="jp1">Japan (JP1)</option>
+              <option value="oc1">Oceania (OC1)</option>
+              <option value="tw2">Taiwan (TW2)</option>
+              <option value="sg2">Singapore (SG2)</option>
+              <option value="vn2">Vietnam (VN2)</option>
+            </select>
+          </div>
+
+          <button class="btn" id="searchBtn" onclick="doSearch()">
+            <span id="searchBtnLabel" data-i18n="btn_register">🔍 Buscar / Gerar UUID</span>
+          </button>
+
+          <!-- Result box (Register mode) -->
+          <div class="result-box" id="registerResult">
+            <div class="result-label" id="registerResultLabel">✓ <span data-i18n="result_uuid">PUUID encontrado</span></div>
+            <div class="result-code">
+              <code id="puuidValue"></code>
+              <button class="copy-btn" onclick="copyPuuid()">COPY</button>
+            </div>
+            <div class="player-info">
+              <span>👤 <strong id="playerNameDisplay"></strong></span>
+              <span>🌎 <strong id="playerRegionDisplay"></strong></span>
+              <span id="newBadge" style="color: var(--success);"></span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================
+           DIREITA: COMANDO
+           ============================================ -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title" data-i18n="cmd_title">Montar Comando</div>
+          <div class="panel-badge" data-i18n="step02">PASSO 02</div>
+        </div>
+        <div class="panel-body">
+
+          <div class="form-group">
+            <label data-i18n="lbl_queue">Fila TFT</label>
+            <select id="queueSelect">
+              <option value="tft" data-i18n-option="q_tft">Ranqueado TFT</option>
+              <option value="tft_double_up" data-i18n-option="q_double">Double Up</option>
+              <option value="tft_turbo" data-i18n-option="q_turbo">Hyper Roll (Turbo)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="lbl_vars">Variáveis (clique para inserir)</label>
+            <div class="vars-grid" id="varsGrid"></div>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="lbl_template">Template da mensagem</label>
+            <textarea id="msgTemplate" placeholder="(player) está (rank) com (pontos) pontos"></textarea>
+          </div>
+
+          <button class="btn" onclick="testCommand()" data-i18n="btn_test">▶ Testar comando</button>
+
+          <!-- Preview -->
+          <div class="preview-box" id="previewBox">
+            <div class="chat-mock">
+              <div class="chat-mock-header" data-i18n="chat_preview">PRÉVIA NA TWITCH</div>
+              <div class="chat-line">
+                <span class="bot">[BOT]</span><span id="chatResult"></span>
+              </div>
+            </div>
+
+            <div class="command-output">
+              <div class="command-output-label" data-i18n="cmd_copy">📋 COMANDO PARA O STREAMELEMENTS</div>
+              <div class="command-output-code">
+                <code id="commandCode"></code>
+                <button class="copy-btn" onclick="copyCommand()">COPY</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <footer>
+      <span data-i18n="footer_text">
+        asrus.app não é endossado pela Riot Games e não reflete as opiniões da Riot Games ou de quem está envolvido oficialmente com seus produtos. Riot Games e todas as marcas associadas são marcas registradas da Riot Games, Inc.
+      </span>
+    </footer>
+  </div>
+
+  <script>
+    // ============================================
+    // I18N
+    // ============================================
+    const I18N = {
+      pt: {
+        home: 'Portfólio',
+        hero_desc: 'Comandos customizados para exibir o seu rank de Teamfight Tactics em tempo real na Twitch',
+        search_title: 'Buscar Jogador',
+        step01: 'PASSO 01',
+        search_register: 'Nick + Tag',
+        search_puuid: 'PUUID',
+        lbl_nick: 'Nick',
+        lbl_tag: 'Tag',
+        lbl_region: 'Região',
+        btn_register: '🔍 Buscar / Gerar UUID',
+        btn_puuid: '🔍 Buscar PUUID',
+        result_uuid: 'PUUID encontrado',
+        result_uuid_new: 'Novo jogador registrado',
+        cmd_title: 'Montar Comando',
+        step02: 'PASSO 02',
+        lbl_queue: 'Fila TFT',
+        lbl_vars: 'Variáveis (clique para inserir)',
+        lbl_template: 'Template da mensagem',
+        btn_test: '▶ Testar comando',
+        chat_preview: 'PRÉVIA NA TWITCH',
+        cmd_copy: '📋 COMANDO PARA O STREAMELEMENTS',
+        q_tft: 'Ranqueado TFT',
+        q_double: 'Double Up',
+        q_turbo: 'Hyper Roll (Turbo)',
+        footer_text: 'asrus.app não é endossado pela Riot Games e não reflete as opiniões da Riot Games ou de quem está envolvido oficialmente com seus produtos. Riot Games e todas as marcas associadas são marcas registradas da Riot Games, Inc.',
+        toast_no_puuid: 'Busque um jogador primeiro',
+        toast_copied: 'Copiado!',
+        toast_cmd_copied: 'Comando copiado! Cole na resposta do seu comando no StreamElements',
+        toast_fill: 'Preencha nick, tag e região',
+        toast_searching: 'Buscando...',
+        toast_new_player: 'Novo jogador registrado!',
+        toast_found: 'Jogador encontrado!',
+        toast_err: 'Erro ao buscar jogador',
+        new_badge: '⭐ Novo'
+      },
+      en: {
+        home: 'Portfolio',
+        hero_desc: 'Custom commands to display your Teamfight Tactics rank in real time on Twitch',
+        search_title: 'Search Player',
+        step01: 'STEP 01',
+        search_register: 'Name + Tag',
+        search_puuid: 'PUUID',
+        lbl_nick: 'Name',
+        lbl_tag: 'Tag',
+        lbl_region: 'Region',
+        btn_register: '🔍 Search / Generate UUID',
+        btn_puuid: '🔍 Get PUUID',
+        result_uuid: 'PUUID found',
+        result_uuid_new: 'New player registered',
+        cmd_title: 'Build Command',
+        step02: 'STEP 02',
+        lbl_queue: 'TFT Queue',
+        lbl_vars: 'Variables (click to insert)',
+        lbl_template: 'Message template',
+        btn_test: '▶ Test command',
+        chat_preview: 'TWITCH PREVIEW',
+        cmd_copy: '📋 COMMAND FOR STREAMELEMENTS',
+        q_tft: 'Ranked TFT',
+        q_double: 'Double Up',
+        q_turbo: 'Hyper Roll (Turbo)',
+        footer_text: 'asrus.app isn\'t endorsed by Riot Games and doesn\'t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.',
+        toast_no_puuid: 'Search a player first',
+        toast_copied: 'Copied!',
+        toast_cmd_copied: 'Command copied! Paste into your StreamElements command response',
+        toast_fill: 'Fill in name, tag and region',
+        toast_searching: 'Searching...',
+        toast_new_player: 'New player registered!',
+        toast_found: 'Player found!',
+        toast_err: 'Error searching player',
+        new_badge: '⭐ New'
+      }
+    };
+
+    let currentLang = (localStorage.getItem('ranktft_lang') === 'en') ? 'en' : 'pt';
+    let currentSearchMode = 'register'; // 'register' | 'puuid'
+    let currentPuuid = null;
+    let currentPlayerName = null;
+    let currentRegion = null;
+
+    const VARS_LIST = [
+      'player', 'tag', 'region', 'modo',
+      'rank', 'tier', 'divisao', 'pontos',
+      'vitorias', 'derrotas', 'winrate', 'jogos'
+    ];
+
+    // ============================================
+    // I18N HELPERS
+    // ============================================
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('ranktft_lang', lang);
+      document.documentElement.lang = (lang === 'pt') ? 'pt-BR' : 'en';
+      document.title = (lang === 'pt') ? 'Rank TFT — asrus.app' : 'Rank TFT — asrus.app';
+
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (I18N[lang][key]) el.textContent = I18N[lang][key];
+      });
+
+      document.querySelectorAll('[data-i18n-option]').forEach(opt => {
+        const key = opt.dataset.i18nOption;
+        if (I18N[lang][key]) opt.textContent = I18N[lang][key];
+      });
+
+      // search button label depends on mode
+      updateSearchButtonLabel();
+
+      // re-render vars (no change in keys, but keeps consistency)
+      renderVars();
+
+      // default template placeholder
+      const tpl = document.getElementById('msgTemplate');
+      tpl.placeholder = (lang === 'pt')
+        ? '(player) está (rank) com (pontos) pontos'
+        : '(player) is (rank) with (pontos) points';
+    }
+
+    function t(key) {
+      return I18N[currentLang][key] || key;
+    }
+
+    // ============================================
+    // SEARCH MODE
+    // ============================================
+    function setSearchMode(mode) {
+      currentSearchMode = mode;
+      document.querySelectorAll('.search-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.searchMode === mode);
+      });
+      updateSearchButtonLabel();
+      // hide previous result
+      document.getElementById('registerResult').classList.remove('show');
+    }
+
+    function updateSearchButtonLabel() {
+      const lbl = document.getElementById('searchBtnLabel');
+      lbl.textContent = (currentSearchMode === 'register') ? t('btn_register') : t('btn_puuid');
+    }
+
+    // ============================================
+    // VARS
+    // ============================================
+    function renderVars() {
+      const grid = document.getElementById('varsGrid');
+      grid.innerHTML = '';
+      VARS_LIST.forEach(v => {
+        const chip = document.createElement('span');
+        chip.className = 'var-chip';
+        chip.textContent = `(${v})`;
+        chip.onclick = () => insertVar(`(${v})`);
+        grid.appendChild(chip);
+      });
+    }
+
+    function insertVar(varText) {
+      const ta = document.getElementById('msgTemplate');
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const v = ta.value;
+      ta.value = v.slice(0, start) + varText + v.slice(end);
+      ta.focus();
+      ta.setSelectionRange(start + varText.length, start + varText.length);
+    }
+
+    // ============================================
+    // SEARCH
+    // ============================================
+    async function doSearch() {
+      const gameName = document.getElementById('gameName').value.trim();
+      const tagLine = document.getElementById('tagLine').value.trim().replace(/^#/, '');
+      const region = document.getElementById('region').value;
+
+      if (!gameName || !tagLine || !region) {
+        showAlert(t('toast_fill'), 'error');
+        return;
+      }
+
+      const btn = document.getElementById('searchBtn');
+      btn.disabled = true;
+      const lbl = document.getElementById('searchBtnLabel');
+      const original = lbl.textContent;
+      lbl.textContent = t('toast_searching');
+
+      try {
+        const endpoint = (currentSearchMode === 'register') ? '/api/tft/register' : '/api/tft/puuid';
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gameName, tagLine, region })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'erro');
+
+        currentPuuid = data.riot_puuid;
+        currentPlayerName = `${data.game_name}#${data.tag_line}`;
+        currentRegion = data.region;
+
+        // mostra resultado
+        document.getElementById('puuidValue').textContent = data.riot_puuid;
+        document.getElementById('playerNameDisplay').textContent = currentPlayerName;
+        document.getElementById('playerRegionDisplay').textContent = data.region.toUpperCase();
+
+        // label muda conforme modo + se é novo
+        const labelEl = document.getElementById('registerResultLabel');
+        if (currentSearchMode === 'register' && data.is_new) {
+          labelEl.innerHTML = `✓ ${t('result_uuid_new')}`;
+        } else {
+          labelEl.innerHTML = `✓ ${t('result_uuid')}`;
+        }
+
+        // badge "novo"
+        const badge = document.getElementById('newBadge');
+        badge.textContent = (currentSearchMode === 'register' && data.is_new) ? t('new_badge') : '';
+
+        document.getElementById('registerResult').classList.add('show');
+        showAlert(data.is_new ? t('toast_new_player') : t('toast_found'), 'success');
+      } catch (err) {
+        showAlert(err.message || t('toast_err'), 'error');
+      } finally {
+        btn.disabled = false;
+        lbl.textContent = original;
+      }
+    }
+
+    // ============================================
+    // COPY HELPERS
+    // ============================================
+    function copyPuuid() {
+      if (!currentPuuid) return;
+      navigator.clipboard.writeText(currentPuuid);
+      showAlert(t('toast_copied'), 'success');
+    }
+
+    function copyCommand() {
+      const code = document.getElementById('commandCode').textContent;
+      if (!code) return;
+      navigator.clipboard.writeText(code);
+      showAlert(t('toast_cmd_copied'), 'success');
+    }
+
+    // ============================================
+    // TEST COMMAND (preview + montar $(customapi ...))
+    // ============================================
+    async function testCommand() {
+      if (!currentPuuid) {
+        showAlert(t('toast_no_puuid'), 'error');
+        return;
+      }
+
+      const mode = document.getElementById('queueSelect').value;
+      const tplRaw = document.getElementById('msgTemplate').value;
+      const tpl = tplRaw.trim(); // se vazio, backend usa default
+
+      // ===== Preview da renderização =====
+      try {
+        const res = await fetch('/api/tft/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            riot_puuid: currentPuuid,
+            msg: tpl,
+            mode,
+            lang: currentLang
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'erro');
+
+        document.getElementById('chatResult').textContent = data.result;
+      } catch (err) {
+        document.getElementById('chatResult').textContent = `[erro: ${err.message}]`;
+      }
+
+      // ===== Gerar o $(customapi ...) =====
+      // Formato: $(customapi PUUID?msg="template")
+      // Mas StreamElements consome a URL completa, então: $(customapi BASE/cmd/tft/PUUID?msg=...&mode=...&lang=...)
+      const base = window.location.origin; // https://www.asrus.app
+      const params = new URLSearchParams();
+      if (tpl) params.set('msg', tpl);
+      if (mode !== 'tft') params.set('mode', mode);
+      if (currentLang !== 'pt') params.set('lang', currentLang);
+
+      const url = `${base}/cmd/tft/${currentPuuid}${params.toString() ? '?' + params.toString() : ''}`;
+      const fullCommand = `$(customapi ${url})`;
+
+      document.getElementById('commandCode').textContent = fullCommand;
+      document.getElementById('previewBox').classList.add('show');
+    }
+
+    // ============================================
+    // ALERT
+    // ============================================
+    function showAlert(msg, type = 'info') {
+      const el = document.createElement('div');
+      el.className = `alert ${type}`;
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 2400);
+    }
+
+    // ============================================
+    // BOOT
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+      renderVars();
+      setLang(currentLang);
+    });
+  </script>
+</body>
+</html>
