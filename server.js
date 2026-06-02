@@ -100,54 +100,92 @@ async function initDB() {
     );
   `);
   // Tabela COMPARTILHADA entre os 3 apps (LoL, TFT, Valorant).
-  // O puuid da conta Riot é global, então vincula a mesma conta entre os 3.
-  // Sempre que qualquer app resolve um puuid, faz upsert aqui — assim os
-  // outros "ficam cientes" do mesmo jogador. Requer DATABASE_URL apontando
-  // para o MESMO banco Postgres nos 3 deploys.
-  //   riot_region = região de plataforma (br1, na1, euw1...) usada por LoL/TFT
-  //   val_region  = região do Valorant/HenrikDev (na, eu, br...)
+  // `account_id` é um ID gerado do ZERO (uuid próprio do asrus) — NÃO é o puuid
+  // da Riot nem da HenrikDev. É esse ID que o usuário usa nas URLs dos comandos
+  // dos 3 jogos. Internamente guardamos os puuids reais (riot/val) só para
+  // buscar o rank em cada API. Ao digitar o nick em qualquer site, a conta é
+  // gravada aqui e os outros sites passam a reconhecer o mesmo account_id.
+  // Requer DATABASE_URL apontando para o MESMO banco Postgres nos 3 deploys.
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS linked_accounts (
-      puuid       TEXT PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS accounts (
+      account_id  TEXT PRIMARY KEY,
       game_name   TEXT,
       tag_line    TEXT,
+      riot_puuid  TEXT,
       riot_region TEXT,
+      val_puuid   TEXT,
       val_region  TEXT,
-      updated_at  TIMESTAMP DEFAULT NOW(),
-      created_at  TIMESTAMP DEFAULT NOW()
+      created_at  TIMESTAMP DEFAULT NOW(),
+      updated_at  TIMESTAMP DEFAULT NOW()
     );
   `);
-  console.log('[db] players + linked_accounts tables ready');
+  await pool.query(`CREATE INDEX IF NOT EXISTS accounts_riotid ON accounts (LOWER(game_name), LOWER(tag_line));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS accounts_riot_puuid ON accounts (riot_puuid);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS accounts_val_puuid ON accounts (val_puuid);`);
+  console.log('[db] players + accounts tables ready');
 }
 
 // ============================================
-// VÍNCULO COMPARTILHADO (linked_accounts)
-// Mesma puuid -> mesma conta entre LoL, TFT e Valorant.
+// CONTA COMPARTILHADA (accounts) — ID gerado do zero
+// Mesmo account_id -> mesma conta entre LoL, TFT e Valorant.
 // ============================================
-async function upsertLinkedAccount({ puuid, gameName, tagLine, riotRegion }) {
-  if (!puuid) return;
+function mapRiotToVal(region) {
+  const m = {
+    br1: 'br', na1: 'na', la1: 'latam', la2: 'latam',
+    euw1: 'eu', eun1: 'eu', tr1: 'eu', ru: 'eu', me1: 'eu',
+    kr: 'kr', jp1: 'ap', oc1: 'ap', ph2: 'ap', sg2: 'ap', th2: 'ap', tw2: 'ap', vn2: 'ap'
+  };
+  return m[(region || '').toLowerCase()] || null;
+}
+function mapValToRiot(region) {
+  const m = { br: 'br1', na: 'na1', latam: 'la1', eu: 'euw1', kr: 'kr' };
+  return m[(region || '').toLowerCase()] || null;
+}
+
+async function getSharedAccount(id) {
+  if (!id) return null;
   try {
-    await pool.query(`
-      INSERT INTO linked_accounts (puuid, game_name, tag_line, riot_region, updated_at)
-      VALUES ($1, $2, $3, $4, NOW())
-      ON CONFLICT (puuid) DO UPDATE SET
-        game_name   = COALESCE(EXCLUDED.game_name, linked_accounts.game_name),
-        tag_line    = COALESCE(EXCLUDED.tag_line, linked_accounts.tag_line),
-        riot_region = COALESCE(EXCLUDED.riot_region, linked_accounts.riot_region),
-        updated_at  = NOW()
-    `, [puuid, gameName || null, tagLine || null, riotRegion || null]);
+    const r = await pool.query(
+      'SELECT * FROM accounts WHERE account_id = $1 OR riot_puuid = $1 OR val_puuid = $1 LIMIT 1',
+      [id]
+    );
+    return r.rows[0] || null;
   } catch (err) {
-    console.warn('[linked] upsert falhou:', err.message);
+    console.warn('[accounts] leitura falhou:', err.message);
+    return null;
   }
 }
 
-async function getLinkedAccount(puuid) {
-  if (!puuid) return null;
+// Upsert do lado RIOT (LoL/TFT). Deduplica por riot_puuid e depois por nick#tag.
+// Gera account_id do zero quando a conta ainda não existe. Retorna o account_id.
+async function linkAccountRiot({ riotPuuid, gameName, tagLine, riotRegion }) {
+  const valRegion = mapRiotToVal(riotRegion);
   try {
-    const r = await pool.query('SELECT * FROM linked_accounts WHERE puuid = $1 LIMIT 1', [puuid]);
-    return r.rows[0] || null;
+    let r = await pool.query('SELECT * FROM accounts WHERE riot_puuid = $1 LIMIT 1', [riotPuuid]);
+    if (r.rows.length === 0 && gameName && tagLine) {
+      r = await pool.query(
+        'SELECT * FROM accounts WHERE LOWER(game_name) = LOWER($1) AND LOWER(tag_line) = LOWER($2) LIMIT 1',
+        [gameName, tagLine]
+      );
+    }
+    if (r.rows.length > 0) {
+      const acc = r.rows[0];
+      await pool.query(`
+        UPDATE accounts SET
+          game_name = $1, tag_line = $2, riot_puuid = $3, riot_region = $4,
+          val_region = COALESCE(val_region, $5), updated_at = NOW()
+        WHERE account_id = $6
+      `, [gameName, tagLine, riotPuuid, riotRegion, valRegion, acc.account_id]);
+      return acc.account_id;
+    }
+    const accountId = uuidv4();
+    await pool.query(`
+      INSERT INTO accounts (account_id, game_name, tag_line, riot_puuid, riot_region, val_region)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `, [accountId, gameName, tagLine, riotPuuid, riotRegion, valRegion]);
+    return accountId;
   } catch (err) {
-    console.warn('[linked] leitura falhou:', err.message);
+    console.warn('[accounts] upsert (riot) falhou:', err.message);
     return null;
   }
 }
@@ -225,9 +263,9 @@ async function fetchPlayerData(player) {
     tft_turbo: leagueEntries.find(e => e.queueType === 'RANKED_TFT_TURBO') || null
   };
 
-  // Mantém o vínculo cross-app atualizado (nome/tag atuais).
-  await upsertLinkedAccount({
-    puuid: player.riot_puuid,
+  // Mantém a conta compartilhada atualizada (nome/tag atuais).
+  await linkAccountRiot({
+    riotPuuid: player.riot_puuid,
     gameName: player.game_name,
     tagLine: player.tag_line,
     riotRegion: player.region
@@ -351,9 +389,10 @@ app.post('/api/tft/register', async (req, res) => {
       throw err;
     }
 
-    // Avisa os outros apps (LoL, Valorant) sobre este puuid.
-    await upsertLinkedAccount({
-      puuid: account.puuid,
+    // Gera/atualiza o account_id COMPARTILHADO (ID do zero). É esse ID que o
+    // usuário usa nos 3 jogos. Os outros sites passam a reconhecê-lo na hora.
+    const accountId = await linkAccountRiot({
+      riotPuuid: account.puuid,
       gameName: account.gameName,
       tagLine: account.tagLine,
       riotRegion: region
@@ -370,6 +409,7 @@ app.post('/api/tft/register', async (req, res) => {
         [account.gameName, account.tagLine, region, player.custom_uuid]
       );
       return res.json({
+        account_id: accountId,
         custom_uuid: player.custom_uuid,
         riot_puuid: player.riot_puuid,
         game_name: account.gameName,
@@ -388,6 +428,7 @@ app.post('/api/tft/register', async (req, res) => {
     );
 
     res.json({
+      account_id: accountId,
       custom_uuid,
       riot_puuid: account.puuid,
       game_name: account.gameName,
@@ -419,13 +460,14 @@ app.post('/api/tft/puuid', async (req, res) => {
 
     try {
       const account = await getAccountByRiotId(routing.regional, gameName, tagLine);
-      await upsertLinkedAccount({
-        puuid: account.puuid,
+      const accountId = await linkAccountRiot({
+        riotPuuid: account.puuid,
         gameName: account.gameName,
         tagLine: account.tagLine,
         riotRegion: region
       });
       return res.json({
+        account_id: accountId,
         riot_puuid: account.puuid,
         game_name: account.gameName,
         tag_line: account.tagLine,
@@ -493,14 +535,15 @@ app.post('/api/tft/preview', async (req, res) => {
 // Se ?mode ausente → tft
 // Se ?lang ausente → pt
 //
-// O PUUID pode ter sido gerado no LoL/Valorant: se não estiver no banco local
-// do TFT, buscamos o vínculo compartilhado (linked_accounts) e registramos.
+// O :id é o account_id gerado do zero (mesmo ID nos 3 jogos); também aceita o
+// puuid real (compat. legada). Se a conta veio do LoL/Valorant, resolvemos o
+// puuid oficial do TFT e gravamos uma linha local para as próximas chamadas.
 async function handleTftCmd(req, res) {
   res.set('Content-Type', 'text/plain; charset=utf-8');
   res.set('Cache-Control', 'no-store');
 
   try {
-    const { puuid } = req.params;
+    const id = req.params.puuid; // account_id (ou puuid real legado)
     let rawMsg = req.query.msg ? String(req.query.msg) : '';
     // Remove aspas externas: msg="texto" → texto (frontend manda com aspas para legibilidade)
     if (rawMsg.length >= 2 && rawMsg.startsWith('"') && rawMsg.endsWith('"')) {
@@ -514,27 +557,43 @@ async function handleTftCmd(req, res) {
       : '(player) is (rank) with (pontos) points';
     const template = rawMsg.trim() || defaultTpl;
 
-    let { rows } = await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [puuid]);
+    // 1) Compat. legada: puuid real já no banco local do TFT.
+    let { rows } = await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [id]);
 
-    // Cross-app: PUUID conhecido em outro jogo? Reaproveita o vínculo.
+    // 2) Resolve pela conta compartilhada (account_id) e garante a linha local.
     if (rows.length === 0) {
-      const linked = await getLinkedAccount(puuid);
-      const region = (req.query.region || linked?.riot_region || '').toLowerCase();
-      if (linked && REGION_ROUTING[region]) {
-        await pool.query(
-          `INSERT INTO players (custom_uuid, riot_puuid, game_name, tag_line, region)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (riot_puuid) DO NOTHING`,
-          [uuidv4(), puuid, linked.game_name || '', linked.tag_line || '', region]
-        );
-        rows = (await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [puuid])).rows;
+      const acc = await getSharedAccount(id);
+      if (acc) {
+        const region = (req.query.region || acc.riot_region || mapValToRiot(acc.val_region) || '').toLowerCase();
+        let riotPuuid = acc.riot_puuid;
+        // Conta veio só do Valorant: resolve o puuid oficial agora.
+        if (!riotPuuid && acc.game_name && acc.tag_line && REGION_ROUTING[region]) {
+          try {
+            const a = await getAccountByRiotId(REGION_ROUTING[region].regional, acc.game_name, acc.tag_line);
+            riotPuuid = a.puuid;
+            await linkAccountRiot({ riotPuuid, gameName: a.gameName, tagLine: a.tagLine, riotRegion: region });
+          } catch (_) { /* tratado abaixo */ }
+        }
+        if (riotPuuid && REGION_ROUTING[region]) {
+          await pool.query(
+            `INSERT INTO players (custom_uuid, riot_puuid, game_name, tag_line, region)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (riot_puuid) DO NOTHING`,
+            [uuidv4(), riotPuuid, acc.game_name || '', acc.tag_line || '', region]
+          );
+          rows = (await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [riotPuuid])).rows;
+        } else {
+          return res.status(400).send(lang === 'pt'
+            ? 'Conta conhecida em outro jogo. Informe a região do TFT: ?region=br1'
+            : 'Account known from another game. Add the TFT region: ?region=br1');
+        }
       }
     }
 
     if (rows.length === 0) {
       return res.status(404).send(lang === 'pt'
-        ? 'PUUID não registrado em asrus.app/rank-tft'
-        : 'PUUID not registered at asrus.app/rank-tft');
+        ? 'ID não registrado em asrus.app/rank-tft'
+        : 'ID not registered at asrus.app/rank-tft');
     }
 
     const { player, ranks } = await fetchPlayerData(rows[0]);
