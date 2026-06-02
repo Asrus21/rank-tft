@@ -99,7 +99,57 @@ async function initDB() {
       updated_at      TIMESTAMP DEFAULT NOW()
     );
   `);
-  console.log('[db] players table ready');
+  // Tabela COMPARTILHADA entre os 3 apps (LoL, TFT, Valorant).
+  // O puuid da conta Riot é global, então vincula a mesma conta entre os 3.
+  // Sempre que qualquer app resolve um puuid, faz upsert aqui — assim os
+  // outros "ficam cientes" do mesmo jogador. Requer DATABASE_URL apontando
+  // para o MESMO banco Postgres nos 3 deploys.
+  //   riot_region = região de plataforma (br1, na1, euw1...) usada por LoL/TFT
+  //   val_region  = região do Valorant/HenrikDev (na, eu, br...)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS linked_accounts (
+      puuid       TEXT PRIMARY KEY,
+      game_name   TEXT,
+      tag_line    TEXT,
+      riot_region TEXT,
+      val_region  TEXT,
+      updated_at  TIMESTAMP DEFAULT NOW(),
+      created_at  TIMESTAMP DEFAULT NOW()
+    );
+  `);
+  console.log('[db] players + linked_accounts tables ready');
+}
+
+// ============================================
+// VÍNCULO COMPARTILHADO (linked_accounts)
+// Mesma puuid -> mesma conta entre LoL, TFT e Valorant.
+// ============================================
+async function upsertLinkedAccount({ puuid, gameName, tagLine, riotRegion }) {
+  if (!puuid) return;
+  try {
+    await pool.query(`
+      INSERT INTO linked_accounts (puuid, game_name, tag_line, riot_region, updated_at)
+      VALUES ($1, $2, $3, $4, NOW())
+      ON CONFLICT (puuid) DO UPDATE SET
+        game_name   = COALESCE(EXCLUDED.game_name, linked_accounts.game_name),
+        tag_line    = COALESCE(EXCLUDED.tag_line, linked_accounts.tag_line),
+        riot_region = COALESCE(EXCLUDED.riot_region, linked_accounts.riot_region),
+        updated_at  = NOW()
+    `, [puuid, gameName || null, tagLine || null, riotRegion || null]);
+  } catch (err) {
+    console.warn('[linked] upsert falhou:', err.message);
+  }
+}
+
+async function getLinkedAccount(puuid) {
+  if (!puuid) return null;
+  try {
+    const r = await pool.query('SELECT * FROM linked_accounts WHERE puuid = $1 LIMIT 1', [puuid]);
+    return r.rows[0] || null;
+  } catch (err) {
+    console.warn('[linked] leitura falhou:', err.message);
+    return null;
+  }
 }
 
 // ============================================
@@ -174,6 +224,14 @@ async function fetchPlayerData(player) {
     tft_double_up: leagueEntries.find(e => e.queueType === 'RANKED_TFT_DOUBLE_UP') || null,
     tft_turbo: leagueEntries.find(e => e.queueType === 'RANKED_TFT_TURBO') || null
   };
+
+  // Mantém o vínculo cross-app atualizado (nome/tag atuais).
+  await upsertLinkedAccount({
+    puuid: player.riot_puuid,
+    gameName: player.game_name,
+    tagLine: player.tag_line,
+    riotRegion: player.region
+  });
 
   return { player, ranks: byQueue };
 }
@@ -293,6 +351,14 @@ app.post('/api/tft/register', async (req, res) => {
       throw err;
     }
 
+    // Avisa os outros apps (LoL, Valorant) sobre este puuid.
+    await upsertLinkedAccount({
+      puuid: account.puuid,
+      gameName: account.gameName,
+      tagLine: account.tagLine,
+      riotRegion: region
+    });
+
     // 2. Verifica se já existe no banco (pelo puuid)
     const existing = await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [account.puuid]);
 
@@ -353,6 +419,12 @@ app.post('/api/tft/puuid', async (req, res) => {
 
     try {
       const account = await getAccountByRiotId(routing.regional, gameName, tagLine);
+      await upsertLinkedAccount({
+        puuid: account.puuid,
+        gameName: account.gameName,
+        tagLine: account.tagLine,
+        riotRegion: region
+      });
       return res.json({
         riot_puuid: account.puuid,
         game_name: account.gameName,
@@ -411,15 +483,19 @@ app.post('/api/tft/preview', async (req, res) => {
 });
 
 // ============================================
-// ROUTE — /cmd (consumida pelo StreamElements)
+// ROUTE — comando (consumido pelo StreamElements)
 // ============================================
-// Formato:  /cmd/tft/{riot_puuid}?msg=template&mode=tft&lang=pt
+// Rota nova (padrão /api/{jogo}/...):  /api/tft/cmd/{riot_puuid}?msg=...&mode=tft&lang=pt
+// Rota legada (compatibilidade):       /cmd/tft/{riot_puuid}?msg=...&mode=tft&lang=pt
 // O bot manda essa URL via $(customapi ...) e o servidor responde texto puro.
 //
 // Se ?msg ausente → usa default "(player) está (rank) com (pontos) pontos"
 // Se ?mode ausente → tft
 // Se ?lang ausente → pt
-app.get('/cmd/tft/:puuid', async (req, res) => {
+//
+// O PUUID pode ter sido gerado no LoL/Valorant: se não estiver no banco local
+// do TFT, buscamos o vínculo compartilhado (linked_accounts) e registramos.
+async function handleTftCmd(req, res) {
   res.set('Content-Type', 'text/plain; charset=utf-8');
   res.set('Cache-Control', 'no-store');
 
@@ -438,7 +514,23 @@ app.get('/cmd/tft/:puuid', async (req, res) => {
       : '(player) is (rank) with (pontos) points';
     const template = rawMsg.trim() || defaultTpl;
 
-    const { rows } = await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [puuid]);
+    let { rows } = await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [puuid]);
+
+    // Cross-app: PUUID conhecido em outro jogo? Reaproveita o vínculo.
+    if (rows.length === 0) {
+      const linked = await getLinkedAccount(puuid);
+      const region = (req.query.region || linked?.riot_region || '').toLowerCase();
+      if (linked && REGION_ROUTING[region]) {
+        await pool.query(
+          `INSERT INTO players (custom_uuid, riot_puuid, game_name, tag_line, region)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (riot_puuid) DO NOTHING`,
+          [uuidv4(), puuid, linked.game_name || '', linked.tag_line || '', region]
+        );
+        rows = (await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [puuid])).rows;
+      }
+    }
+
     if (rows.length === 0) {
       return res.status(404).send(lang === 'pt'
         ? 'PUUID não registrado em asrus.app/rank-tft'
@@ -452,7 +544,11 @@ app.get('/cmd/tft/:puuid', async (req, res) => {
     console.error('[cmd]', err.response?.status, err.response?.data || err.message);
     return res.status(500).send('Erro interno');
   }
-});
+}
+
+// Rota nova (padrão unificado) + legada
+app.get('/api/tft/cmd/:puuid', handleTftCmd);
+app.get('/cmd/tft/:puuid', handleTftCmd);
 
 // ============================================
 // START

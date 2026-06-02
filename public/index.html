@@ -907,7 +907,7 @@
       if (mode !== 'tft') parts.push(`mode=${mode}`);
       if (currentLang !== 'pt') parts.push(`lang=${currentLang}`);
 
-      const url = `${base}/cmd/tft/${currentPuuid}?${parts.join('&')}`;
+      const url = `${base}/api/tft/cmd/${currentPuuid}?${parts.join('&')}`;
       const fullCommand = `$(customapi ${url})`;
 
       document.getElementById('commandCode').textContent = fullCommand;
