@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
@@ -83,13 +84,19 @@ app.use(cors({
   credentials: false
 }));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Garante o schema antes de atender requests (essencial na Vercel, sem boot).
+app.use(async (req, res, next) => {
+  try { await ensureInit(); next(); } catch (e) { next(e); }
+});
 
 // ============================================
 // DATABASE INIT
 // ============================================
 async function initDB() {
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS players (
+    CREATE TABLE IF NOT EXISTS tft_players (
       custom_uuid     TEXT PRIMARY KEY,
       riot_puuid      TEXT UNIQUE NOT NULL,
       game_name       TEXT NOT NULL,
@@ -122,7 +129,7 @@ async function initDB() {
   await pool.query(`CREATE INDEX IF NOT EXISTS accounts_riotid ON accounts (LOWER(game_name), LOWER(tag_line));`);
   await pool.query(`CREATE INDEX IF NOT EXISTS accounts_riot_puuid ON accounts (riot_puuid);`);
   await pool.query(`CREATE INDEX IF NOT EXISTS accounts_val_puuid ON accounts (val_puuid);`);
-  console.log('[db] players + accounts tables ready');
+  console.log('[db] tft_players + accounts tables ready');
 }
 
 // ============================================
@@ -241,7 +248,7 @@ async function fetchPlayerData(player) {
   // Se o nome mudou, persiste
   if (account.gameName !== player.game_name || account.tagLine !== player.tag_line) {
     await pool.query(
-      `UPDATE players SET game_name=$1, tag_line=$2, updated_at=NOW() WHERE custom_uuid=$3`,
+      `UPDATE tft_players SET game_name=$1, tag_line=$2, updated_at=NOW() WHERE custom_uuid=$3`,
       [account.gameName, account.tagLine, player.custom_uuid]
     );
     player.game_name = account.gameName;
@@ -399,13 +406,13 @@ app.post('/api/tft/register', async (req, res) => {
     });
 
     // 2. Verifica se já existe no banco (pelo puuid)
-    const existing = await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [account.puuid]);
+    const existing = await pool.query('SELECT * FROM tft_players WHERE riot_puuid = $1', [account.puuid]);
 
     if (existing.rows.length > 0) {
       // Já existe — só atualiza nome+tag+região e devolve
       const player = existing.rows[0];
       await pool.query(
-        `UPDATE players SET game_name=$1, tag_line=$2, region=$3, updated_at=NOW() WHERE custom_uuid=$4`,
+        `UPDATE tft_players SET game_name=$1, tag_line=$2, region=$3, updated_at=NOW() WHERE custom_uuid=$4`,
         [account.gameName, account.tagLine, region, player.custom_uuid]
       );
       return res.json({
@@ -422,7 +429,7 @@ app.post('/api/tft/register', async (req, res) => {
     // 3. Novo jogador
     const custom_uuid = uuidv4();
     await pool.query(
-      `INSERT INTO players (custom_uuid, riot_puuid, game_name, tag_line, region)
+      `INSERT INTO tft_players (custom_uuid, riot_puuid, game_name, tag_line, region)
        VALUES ($1, $2, $3, $4, $5)`,
       [custom_uuid, account.puuid, account.gameName, account.tagLine, region]
     );
@@ -500,7 +507,7 @@ app.post('/api/tft/preview', async (req, res) => {
     const template = (msg && msg.trim()) || defaultTpl;
 
     // procura no banco; se não tiver, registra automaticamente para futuras chamadas
-    let { rows } = await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [riot_puuid]);
+    let { rows } = await pool.query('SELECT * FROM tft_players WHERE riot_puuid = $1', [riot_puuid]);
     let player = rows[0];
 
     if (!player) {
@@ -558,7 +565,7 @@ async function handleTftCmd(req, res) {
     const template = rawMsg.trim() || defaultTpl;
 
     // 1) Compat. legada: puuid real já no banco local do TFT.
-    let { rows } = await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [id]);
+    let { rows } = await pool.query('SELECT * FROM tft_players WHERE riot_puuid = $1', [id]);
 
     // 2) Resolve pela conta compartilhada (account_id) e garante a linha local.
     if (rows.length === 0) {
@@ -576,12 +583,12 @@ async function handleTftCmd(req, res) {
         }
         if (riotPuuid && REGION_ROUTING[region]) {
           await pool.query(
-            `INSERT INTO players (custom_uuid, riot_puuid, game_name, tag_line, region)
+            `INSERT INTO tft_players (custom_uuid, riot_puuid, game_name, tag_line, region)
              VALUES ($1, $2, $3, $4, $5)
              ON CONFLICT (riot_puuid) DO NOTHING`,
             [uuidv4(), riotPuuid, acc.game_name || '', acc.tag_line || '', region]
           );
-          rows = (await pool.query('SELECT * FROM players WHERE riot_puuid = $1', [riotPuuid])).rows;
+          rows = (await pool.query('SELECT * FROM tft_players WHERE riot_puuid = $1', [riotPuuid])).rows;
         } else {
           return res.status(400).send(lang === 'pt'
             ? 'Conta conhecida em outro jogo. Informe a região do TFT: ?region=br1'
@@ -612,13 +619,26 @@ app.get('/cmd/tft/:puuid', handleTftCmd);
 // ============================================
 // START
 // ============================================
-initDB()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`[rank-tft] running on port ${PORT}`);
+// Init idempotente, rodada uma vez por processo. Em serverless (Vercel) não há
+// app.listen — garantimos o schema na 1ª request via middleware.
+let _initPromise = null;
+function ensureInit() {
+  if (!_initPromise) _initPromise = initDB().catch((e) => { _initPromise = null; throw e; });
+  return _initPromise;
+}
+
+if (!process.env.VERCEL) {
+  ensureInit()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`[rank-tft] running on port ${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('[startup] init db failed', err);
+      process.exit(1);
     });
-  })
-  .catch(err => {
-    console.error('[startup] init db failed', err);
-    process.exit(1);
-  });
+}
+
+module.exports = app;
+module.exports.ensureInit = ensureInit;
