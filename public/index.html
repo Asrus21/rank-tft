@@ -621,7 +621,7 @@
         lbl_region: 'Região',
         btn_register: '🔍 Buscar / Gerar UUID',
         btn_puuid: '🔍 Buscar PUUID',
-        result_uuid: 'PUUID encontrado',
+        result_uuid: 'ID asrus (vale p/ LoL, TFT e Valorant)',
         result_uuid_new: 'Novo jogador registrado',
         cmd_title: 'Montar Comando',
         step02: 'PASSO 02',
@@ -657,7 +657,7 @@
         lbl_region: 'Region',
         btn_register: '🔍 Search / Generate UUID',
         btn_puuid: '🔍 Get PUUID',
-        result_uuid: 'PUUID found',
+        result_uuid: 'asrus ID (works for LoL, TFT & Valorant)',
         result_uuid_new: 'New player registered',
         cmd_title: 'Build Command',
         step02: 'STEP 02',
@@ -685,7 +685,8 @@
 
     let currentLang = (localStorage.getItem('ranktft_lang') === 'en') ? 'en' : 'pt';
     let currentSearchMode = 'register'; // 'register' | 'puuid'
-    let currentPuuid = null;
+    let currentPuuid = null;       // account_id (ID do zero) — usado nas URLs
+    let currentRiotPuuid = null;   // puuid real da Riot — usado só no preview
     let currentPlayerName = null;
     let currentRegion = null;
 
@@ -807,14 +808,17 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'erro');
 
-        currentPuuid = data.riot_puuid;
+        // ID gerado do zero (vale para LoL, TFT e Valorant). Guardamos o puuid
+        // real separado só para o preview.
+        currentPuuid = data.account_id || data.riot_puuid;
+        currentRiotPuuid = data.riot_puuid;
         currentPlayerName = `${data.game_name}#${data.tag_line}`;
         currentRegion = data.region;
 
         // mostra resultado
-        document.getElementById('puuidValue').textContent = data.riot_puuid;
+        document.getElementById('puuidValue').textContent = currentPuuid;
         document.getElementById('playerNameDisplay').textContent = currentPlayerName;
-        document.getElementById('playerRegionDisplay').textContent = data.region.toUpperCase();
+        document.getElementById('playerRegionDisplay').textContent = (data.region || currentRegion || '').toUpperCase();
 
         // label muda conforme modo + se é novo
         const labelEl = document.getElementById('registerResultLabel');
@@ -873,7 +877,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            riot_puuid: currentPuuid,
+            riot_puuid: currentRiotPuuid,
             msg: tpl,
             mode,
             lang: currentLang
@@ -907,7 +911,7 @@
       if (mode !== 'tft') parts.push(`mode=${mode}`);
       if (currentLang !== 'pt') parts.push(`lang=${currentLang}`);
 
-      const url = `${base}/cmd/tft/${currentPuuid}?${parts.join('&')}`;
+      const url = `${base}/api/tft/cmd/${currentPuuid}?${parts.join('&')}`;
       const fullCommand = `$(customapi ${url})`;
 
       document.getElementById('commandCode').textContent = fullCommand;
