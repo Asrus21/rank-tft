@@ -14,7 +14,7 @@ const RIOT_API_KEY = process.env.RIOT_API_KEY;
 // POSTGRES
 // ============================================
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
