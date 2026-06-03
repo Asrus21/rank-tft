@@ -818,7 +818,7 @@
         // mostra resultado
         document.getElementById('puuidValue').textContent = currentPuuid;
         document.getElementById('playerNameDisplay').textContent = currentPlayerName;
-        document.getElementById('playerRegionDisplay').textContent = data.region.toUpperCase();
+        document.getElementById('playerRegionDisplay').textContent = (data.region || currentRegion || '').toUpperCase();
 
         // label muda conforme modo + se é novo
         const labelEl = document.getElementById('registerResultLabel');
