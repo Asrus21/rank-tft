@@ -612,7 +612,71 @@ async function handleTftCmd(req, res) {
   }
 }
 
+// ============================================
+// COMANDO POR NOME: /api/tft/cmd?player=Nome#Tag&region=br1&mode=tft&msg=...
+// Para o chat: "!rank Nome#Tag" — o espectador passa o nick, o streamer fixa a
+// região no comando. Resolve ao vivo e responde o template (padrão: "(player)
+// está (rank) com (pontos) pontos"). Também grava o account_id compartilhado.
+// ============================================
+async function handleTftByName(req, res) {
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.set('Cache-Control', 'no-store');
+
+  const lang = req.query.lang === 'en' ? 'en' : 'pt';
+  const mode = ['tft', 'tft_double_up', 'tft_turbo'].includes(req.query.mode) ? req.query.mode : 'tft';
+  let rawMsg = req.query.msg ? String(req.query.msg) : '';
+  if (rawMsg.length >= 2 && rawMsg.startsWith('"') && rawMsg.endsWith('"')) rawMsg = rawMsg.slice(1, -1);
+  const defaultTpl = lang === 'pt'
+    ? '(player) está (rank) com (pontos) pontos'
+    : '(player) is (rank) with (pontos) points';
+  const template = rawMsg.trim() || defaultTpl;
+
+  // Identidade: ?player=Nome#Tag OU ?nick=&tag=
+  let nick = (req.query.nick || '').trim();
+  let tag = (req.query.tag || '').trim();
+  const combined = (req.query.player || req.query.riot || '').trim();
+  if ((!nick || !tag) && combined.includes('#')) {
+    const h = combined.lastIndexOf('#');
+    nick = combined.slice(0, h).trim();
+    tag = combined.slice(h + 1).trim();
+  }
+  const region = (req.query.region || '').toLowerCase();
+
+  if (!nick || !tag) {
+    return res.send(lang === 'pt' ? 'Use: !rank Nome#Tag' : 'Use: !rank Name#Tag');
+  }
+  if (!REGION_ROUTING[region]) {
+    return res.send(lang === 'pt'
+      ? 'Configure a região do TFT no comando (ex.: &region=br1)'
+      : 'Set the TFT region in the command (e.g. &region=br1)');
+  }
+
+  try {
+    const routing = REGION_ROUTING[region];
+    const account = await getAccountByRiotId(routing.regional, nick, tag);
+    await linkAccountRiot({
+      riotPuuid: account.puuid, gameName: account.gameName,
+      tagLine: account.tagLine, riotRegion: region
+    });
+    await pool.query(
+      `INSERT INTO tft_players (custom_uuid, riot_puuid, game_name, tag_line, region)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (riot_puuid) DO NOTHING`,
+      [uuidv4(), account.puuid, account.gameName, account.tagLine, region]
+    );
+    const { rows } = await pool.query('SELECT * FROM tft_players WHERE riot_puuid = $1', [account.puuid]);
+    const { player, ranks } = await fetchPlayerData(rows[0]);
+    return res.send(applyTemplate(template, player, ranks, mode, lang));
+  } catch (err) {
+    const status = err.response?.status;
+    if (status === 404) return res.send(lang === 'pt' ? 'Jogador não encontrado' : 'Player not found');
+    console.error('[cmd byname]', status, err.response?.data || err.message);
+    return res.send(lang === 'pt' ? 'Erro ao processar o comando' : 'Error processing command');
+  }
+}
+
 // Rota nova (padrão unificado) + legada
+app.get('/api/tft/cmd', handleTftByName);
 app.get('/api/tft/cmd/:puuid', handleTftCmd);
 app.get('/cmd/tft/:puuid', handleTftCmd);
 
