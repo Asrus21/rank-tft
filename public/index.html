@@ -5,31 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rank TFT — asrus.app</title>
   <link rel="icon" href="https://www.asrus.app/portifolio/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
   <style>
+    /* Tema unificado asrus.app — base escura compartilhada + acento TFT */
     :root {
-      --bg: #0a0e1a;
-      --bg-2: #111827;
-      --panel: #151c2c;
-      --panel-2: #1c2538;
-      --border: #2a3450;
-      --text: #e6e9f2;
-      --muted: #8892b0;
-      --accent: #d4a253;
-      --accent-2: #f5c97a;
-      --accent-glow: rgba(212, 162, 83, 0.25);
-      --success: #5ddb8c;
-      --danger: #ff6b6b;
-      --info: #6ab7ff;
+      --bg: #0a0a0f;
+      --bg-2: #12121a;
+      --panel: #1a1a26;
+      --panel-2: #232333;
+      --border: #2a2a3a;
+      --text: #f5f5fa;
+      --muted: #9999b3;
+      --accent: #f59e0b;
+      --accent-2: #c084fc;
+      --accent-glow: rgba(245, 158, 11, 0.25);
+      --success: #1ed760;
+      --danger: #ef4444;
+      --info: #60a5fa;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Outfit', sans-serif;
       background: var(--bg);
       background-image:
-        radial-gradient(circle at 20% 10%, rgba(212, 162, 83, 0.08), transparent 50%),
-        radial-gradient(circle at 80% 90%, rgba(106, 183, 255, 0.05), transparent 50%);
+        radial-gradient(circle at 20% 10%, rgba(245, 158, 11, 0.08), transparent 50%),
+        radial-gradient(circle at 80% 90%, rgba(192, 132, 252, 0.06), transparent 50%);
       color: var(--text);
       min-height: 100vh;
       padding: 80px 20px 40px;
@@ -46,7 +50,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
-      background: rgba(10, 14, 26, 0.85);
+      background: rgba(10, 10, 15, 0.85);
       backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border);
       z-index: 100;
@@ -98,7 +102,7 @@
     }
     .lang-btn.active {
       background: var(--accent);
-      color: #0a0e1a;
+      color: #0a0a0f;
     }
 
     /* ============================================
@@ -135,6 +139,18 @@
     @media (max-width: 980px) {
       .grid { grid-template-columns: 1fr; }
     }
+    @media (max-width: 560px) {
+      body { padding: 76px 14px 32px; }
+      .topbar { padding: 0 12px; height: 58px; }
+      .home-btn { padding: 7px 10px; font-size: 13px; }
+      .home-btn span { display: none; }
+      .hero h1 { font-size: 28px; }
+      .hero p { font-size: 13.5px; }
+      .panel-header { padding: 14px 16px; }
+      .panel-body { padding: 16px; }
+      .row { grid-template-columns: 1fr; }
+      .alert { left: 12px; right: 12px; max-width: none; top: 70px; }
+    }
 
     .panel {
       background: var(--panel);
@@ -158,7 +174,7 @@
       font-size: 11px;
       padding: 4px 10px;
       background: var(--accent);
-      color: #0a0e1a;
+      color: #0a0a0f;
       border-radius: 12px;
       font-weight: 700;
       letter-spacing: 0.5px;
@@ -190,7 +206,7 @@
     }
     .search-tab.active {
       background: var(--accent);
-      color: #0a0e1a;
+      color: #0a0a0f;
     }
 
     /* ============================================
@@ -233,7 +249,7 @@
       width: 100%;
       padding: 12px 18px;
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-      color: #0a0e1a;
+      color: #0a0a0f;
       border: none;
       border-radius: 8px;
       font-size: 14px;
@@ -293,7 +309,7 @@
     .copy-btn {
       padding: 6px 12px;
       background: var(--accent);
-      color: #0a0e1a;
+      color: #0a0a0f;
       border: none;
       border-radius: 5px;
       font-size: 11px;
@@ -367,7 +383,7 @@
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .chat-line .bot {
-      color: #d4a253;
+      color: var(--accent);
       font-weight: 700;
       margin-right: 6px;
     }
