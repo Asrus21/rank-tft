@@ -27,7 +27,7 @@ Se o usuário não preencher template e clicar em "Testar comando", é usado o p
 ## Funcionalidades
 
 - ✅ Bilíngue **PT/EN** (toggle no canto superior direito)
-- ✅ Botão de retorno ao portfólio (`asrus.app/portifolio`) no canto superior esquerdo
+- ✅ Botão "Início" (volta para `asrus.app`) no canto superior esquerdo
 - ✅ Busca por **Nick + Tag** (registra e gera o UUID persistente)
 - ✅ Busca por **PUUID** (apenas lookup, sem registrar)
 - ✅ Três filas TFT suportadas: **Ranqueado**, **Double Up**, **Hyper Roll (Turbo)**
