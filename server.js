@@ -84,7 +84,16 @@ app.use(cors({
   credentials: false
 }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// Sem Last-Modified nem ETag nos arquivos estáticos. Na Vercel todo arquivo
+// sai com a mesma data de modificação (20/10/2018), então o navegador pergunta
+// "mudou desde 2018?", recebe 304 e segue mostrando a página ANTIGA do cache —
+// um deploy novo nunca aparecia para quem já tinha aberto o site. Sem os
+// validadores, o no-cache obriga a baixar de novo; a página é pequena.
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+}));
 
 // Garante o schema antes de atender requests (essencial na Vercel, sem boot).
 app.use(async (req, res, next) => {
