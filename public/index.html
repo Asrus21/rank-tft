@@ -9,464 +9,222 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%99%9F%EF%B8%8F</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* Tema unificado asrus.app — base escura compartilhada + acento TFT */
+    /* ============================================
+       Referência: EPIC agency, no Refero Styles ("violet observatory
+       with gilded instruments"). Céu berinjela, tudo em lavanda-luar,
+       e o dourado como joia — pouco e só onde importa. Título em serifa
+       Garamond grande e assimétrico; interface em Inter com rótulos em
+       caixa-alta bem espaçados; ações como pílulas contornadas que se
+       enchem no hover. Combina com o roxo e o ouro do próprio TFT.
+       ============================================ */
     :root {
-      --bg: #0a0a0f;
-      --bg-2: #12121a;
-      --panel: #1a1a26;
-      --panel-2: #232333;
-      --border: #2a2a3a;
-      --text: #f5f5fa;
-      --muted: #9999b3;
-      --accent: #f59e0b;
-      --accent-2: #c084fc;
-      --accent-glow: rgba(245, 158, 11, 0.25);
-      --success: #1ed760;
-      --danger: #ef4444;
-      --info: #60a5fa;
+      --bg: #271a47;            /* Aubergine Canvas */
+      --bg-deep: #1d1336;
+      --panel: rgba(219, 201, 255, 0.04);
+      --panel-2: rgba(219, 201, 255, 0.07);
+      --line: rgba(219, 201, 255, 0.14);
+      --line-strong: rgba(219, 201, 255, 0.32);
+      --text: #dbc9ff;          /* Moonlight Lavender */
+      --text-strong: #f3ecff;
+      --muted: rgba(219, 201, 255, 0.62);
+      --gold: #bc994e;          /* Gilded Brass */
+      --gold-soft: rgba(188, 153, 78, 0.14);
+      --ink: #000000;           /* Obsidian */
+      --success: #9fe0b8;
+      --danger: #ff9db0;
+      --serif: 'Cormorant Garamond', 'Times New Roman', serif;
+      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Outfit', sans-serif;
-      background: var(--bg);
-      background-image:
-        radial-gradient(circle at 20% 10%, rgba(245, 158, 11, 0.08), transparent 50%),
-        radial-gradient(circle at 80% 90%, rgba(192, 132, 252, 0.06), transparent 50%);
+      font-family: var(--sans);
+      background:
+        radial-gradient(900px 500px at 80% -10%, rgba(219, 201, 255, 0.10), transparent 60%),
+        var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 80px 20px 40px;
+      font-size: 14px;
+      line-height: 1.65;
+      letter-spacing: 0.036em;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :focus-visible { outline: 1px solid var(--text); outline-offset: 3px; }
+
+    /* Rótulo editorial: caixa-alta pequena com tracking aberto. */
+    .eyebrow, label, .panel-badge, .result-label, .chat-mock-header, .command-output-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.111em;
     }
 
     /* ============================================
-       TOP BAR — Botão portfólio (canto sup. esq.) + Lang toggle
+       TOPO — marca à esquerda, lema no centro, pílula de idioma à direita,
+       e um fio de 1px em lavanda cruzando a página.
        ============================================ */
     .topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      background: rgba(10, 10, 15, 0.85);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border);
-      z-index: 100;
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+      padding: 18px 32px; border-bottom: 1px solid var(--line);
     }
-
     .home-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      text-decoration: none;
-      color: var(--text);
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.2s;
+      justify-self: start; display: inline-flex; align-items: center; gap: 8px;
+      color: var(--text); text-decoration: none; font-size: 13px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.111em; border-radius: 30px; padding: 6px 4px;
+      transition: color 0.2s ease;
     }
-    .home-btn:hover {
-      background: var(--panel-2);
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
-    .home-btn svg {
-      width: 18px;
-      height: 18px;
-      flex: none;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .lang-toggle {
-      display: flex;
-      gap: 6px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 4px;
-    }
+    .home-btn:hover { color: var(--gold); }
+    .home-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+    .tagline { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5em; color: var(--text); white-space: nowrap; }
+    .lang-toggle { justify-self: end; display: inline-flex; border: 1px solid var(--text); border-radius: 30px; padding: 2px; }
     .lang-btn {
-      padding: 6px 12px;
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.2s;
+      border: none; background: transparent; color: var(--text); font: inherit; font-size: 12px;
+      font-weight: 600; padding: 4px 12px; border-radius: 30px; cursor: pointer; letter-spacing: 0.08em;
+      transition: background 0.2s ease, color 0.2s ease;
     }
-    .lang-btn.active {
-      background: var(--accent);
-      color: #0a0a0f;
-    }
+    .lang-btn.active { background: var(--text); color: var(--bg); }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 32px 64px; }
 
     /* ============================================
-       LAYOUT
+       HERO — a serifa carrega a página. A segunda linha recua para a
+       direita (a composição assimétrica do EPIC).
        ============================================ */
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-    }
-
-    .hero {
-      text-align: center;
-      margin-bottom: 32px;
-    }
+    .hero { padding: 72px 0 56px; }
+    .hero .eyebrow { color: var(--gold); margin-bottom: 18px; display: block; }
     .hero h1 {
-      font-size: 38px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
+      font-family: var(--serif); font-weight: 400; color: var(--text);
+      font-size: clamp(64px, 12vw, 128px); line-height: 0.95; letter-spacing: -0.01em;
     }
-    .hero p {
-      color: var(--muted);
-      font-size: 15px;
-    }
+    .hero h1 .indent { display: block; padding-left: 1.4em; font-style: italic; color: var(--text-strong); }
+    .hero p { max-width: 44ch; margin-top: 28px; font-size: 16px; line-height: 1.7; color: var(--muted); }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-    @media (max-width: 980px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 560px) {
-      body { padding: 76px 14px 32px; }
-      .topbar { padding: 0 12px; height: 58px; }
-      .home-btn { padding: 7px 10px; font-size: 13px; }
-      .home-btn span { display: none; }
-      .hero h1 { font-size: 28px; }
-      .hero p { font-size: 13.5px; }
-      .panel-header { padding: 14px 16px; }
-      .panel-body { padding: 16px; }
-      .row { grid-template-columns: 1fr; }
-      .alert { left: 12px; right: 12px; max-width: none; top: 70px; }
-    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-    }
+    /* ============================================
+       PAINÉIS — cartões de 10px, quase transparentes sobre o céu, com o
+       cabeçalho no formato de "entrada de diário": título + data/rótulo.
+       ============================================ */
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
     .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 18px 22px;
-      background: var(--panel-2);
-      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+      padding: 22px 24px 18px; border-bottom: 1px solid var(--line);
     }
-    .panel-title {
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .panel-badge {
-      font-size: 11px;
-      padding: 4px 10px;
-      background: var(--accent);
-      color: #0a0a0f;
-      border-radius: 12px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-    .panel-body { padding: 22px; }
+    .panel-title { font-family: var(--serif); font-size: 34px; font-weight: 400; line-height: 1.1; color: var(--text-strong); letter-spacing: 0; }
+    .panel-badge { color: var(--gold); white-space: nowrap; }
+    .panel-body { padding: 24px; }
 
-    /* ============================================
-       SEARCH MODE TABS
-       ============================================ */
-    .search-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      background: var(--bg-2);
-      padding: 4px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      margin-bottom: 18px;
-    }
+    .search-tabs { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--line-strong); border-radius: 30px; margin-bottom: 22px; }
     .search-tab {
-      padding: 10px 14px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      border-radius: 7px;
-      cursor: pointer;
-      transition: all 0.2s;
+      padding: 7px 16px; border-radius: 30px; cursor: pointer; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.111em; color: var(--muted);
+      transition: background 0.2s ease, color 0.2s ease;
     }
-    .search-tab.active {
-      background: var(--accent);
-      color: #0a0a0f;
-    }
+    .search-tab:hover { color: var(--text); }
+    .search-tab.active { background: var(--text); color: var(--bg); }
 
-    /* ============================================
-       FORM ELEMENTS
-       ============================================ */
-    .form-group { margin-bottom: 14px; }
-    label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; color: var(--muted); margin-bottom: 8px; }
     input, select, textarea {
-      width: 100%;
-      padding: 10px 12px;
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 14px;
-      font-family: inherit;
-      transition: border 0.2s;
+      width: 100%; padding: 12px 14px; background: rgba(0, 0, 0, 0.18); color: var(--text-strong);
+      border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: 14px; letter-spacing: 0.02em;
+      transition: border-color 0.2s ease;
     }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    textarea { resize: vertical; min-height: 70px; font-family: 'Consolas', 'Monaco', monospace; }
+    input::placeholder, textarea::placeholder { color: rgba(219, 201, 255, 0.38); }
+    input:hover, select:hover, textarea:hover { border-color: var(--line-strong); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--text); }
+    select option { background: var(--bg); color: var(--text); }
+    textarea { min-height: 84px; resize: vertical; font-family: var(--mono); font-size: 13px; line-height: 1.6; letter-spacing: 0; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    .row {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 10px;
-    }
-
+    /* Ação: pílula contornada em lavanda com seta; enche no hover. */
     .btn {
-      width: 100%;
-      padding: 12px 18px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-      color: #0a0a0f;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 4px 12px var(--accent-glow);
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+      padding: 13px 22px; background: transparent; color: var(--text); border: 1px solid var(--text);
+      border-radius: 30px; font: inherit; font-size: 13px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.111em; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
     }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--accent-glow); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn::after { content: "→"; font-size: 15px; letter-spacing: 0; }
+    .btn:hover { background: var(--text); color: var(--bg); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; background: transparent; color: var(--text); }
+    .btn-secondary { border-color: var(--line-strong); color: var(--muted); }
+    .btn-secondary:hover { background: var(--panel-2); color: var(--text); }
 
-    .btn-secondary {
-      background: var(--panel-2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      box-shadow: none;
-    }
-    .btn-secondary:hover { background: var(--border); }
-
-    /* ============================================
-       RESULT BOX (UUID / PUUID)
-       ============================================ */
-    .result-box {
-      display: none;
-      margin-top: 16px;
-      padding: 14px;
-      background: var(--bg-2);
-      border: 1px solid var(--success);
-      border-radius: 10px;
-      animation: fadeIn 0.3s;
-    }
+    /* Resultado: uma "entrada de diário" com o PUUID. */
+    .result-box { display: none; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); animation: fadeIn 0.3s; }
     .result-box.show { display: block; }
-    .result-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--success);
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
+    .result-label { color: var(--gold); margin-bottom: 10px; }
+    .result-code, .command-output-code {
+      display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px;
+      background: rgba(0, 0, 0, 0.22); border: 1px solid var(--line); border-radius: 10px;
     }
-    .result-code {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg);
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      margin-bottom: 10px;
-    }
-    .result-code code {
-      flex: 1;
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 12px;
-      color: var(--accent-2);
-      word-break: break-all;
+    .result-code code, .command-output-code code {
+      flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0;
+      color: var(--text-strong); word-break: break-all; line-height: 1.6;
     }
     .copy-btn {
-      padding: 6px 12px;
-      background: var(--accent);
-      color: #0a0a0f;
-      border: none;
-      border-radius: 5px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      flex-shrink: 0;
+      flex: none; padding: 6px 14px; background: transparent; color: var(--gold);
+      border: 1px solid var(--gold); border-radius: 30px; font: inherit; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.111em; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
     }
-    .copy-btn:hover { background: var(--accent-2); }
-    .player-info {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .player-info strong { color: var(--text); }
+    .copy-btn:hover { background: var(--gold); color: var(--bg); }
+    .player-info { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+    .player-info strong { color: var(--text-strong); font-weight: 600; }
 
-    /* ============================================
-       VARIABLES (clickable chips)
-       ============================================ */
-    .vars-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
+    /* Variáveis: pílulas contornadas, o dourado aparece no hover. */
+    .vars-grid { display: flex; flex-wrap: wrap; gap: 6px; }
     .var-chip {
-      padding: 5px 10px;
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      font-size: 11px;
-      font-family: 'Consolas', 'Monaco', monospace;
-      color: var(--info);
-      cursor: pointer;
-      transition: all 0.15s;
+      padding: 5px 12px; border: 1px solid var(--line-strong); border-radius: 30px; cursor: pointer;
+      font-family: var(--mono); font-size: 12px; letter-spacing: 0; color: var(--text);
+      transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
     }
-    .var-chip:hover {
-      background: var(--info);
-      color: var(--bg);
-      transform: translateY(-1px);
-    }
+    .var-chip:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
 
-    /* ============================================
-       PREVIEW & COMMAND OUTPUT
-       ============================================ */
-    .preview-box {
-      display: none;
-      margin-top: 16px;
-      animation: fadeIn 0.3s;
-    }
+    .preview-box { display: none; margin-top: 22px; animation: fadeIn 0.3s; }
     .preview-box.show { display: block; }
+    /* A prévia do chat é o bloco de mídia: obsidiana pura, como o showreel. */
+    .chat-mock { background: var(--ink); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+    .chat-mock-header { color: var(--muted); margin-bottom: 10px; }
+    .chat-line { font-size: 14px; color: #efeaff; line-height: 1.6; word-break: break-word; }
+    .chat-line .bot { color: var(--gold); font-weight: 700; margin-right: 8px; }
+    .command-output-label { color: var(--muted); margin-bottom: 8px; }
 
-    .chat-mock {
-      background: #18181b;
-      border: 1px solid #2d2d35;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 14px;
-      font-size: 14px;
-    }
-    .chat-mock-header {
-      font-size: 11px;
-      color: #8a8a99;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .chat-line {
-      color: #efeff1;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    .chat-line .bot {
-      color: var(--accent);
-      font-weight: 700;
-      margin-right: 6px;
-    }
-
-    .command-output {
-      background: var(--bg-2);
-      border: 1px solid var(--accent);
-      border-radius: 10px;
-      padding: 14px;
-    }
-    .command-output-label {
-      font-size: 11px;
-      color: var(--accent);
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-    .command-output-code {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg);
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-    }
-    .command-output-code code {
-      flex: 1;
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 11px;
-      color: var(--accent-2);
-      word-break: break-all;
-    }
-
-    /* ============================================
-       ALERTS
-       ============================================ */
     .alert {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      padding: 12px 18px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 600;
-      max-width: 360px;
-      z-index: 200;
+      position: fixed; top: 84px; right: 24px; z-index: 200; max-width: 360px;
+      padding: 12px 18px; background: var(--bg-deep); color: var(--text-strong);
+      border: 1px solid var(--line-strong); border-radius: 30px; font-size: 13px; font-weight: 600;
       animation: slideIn 0.3s;
     }
     .alert.success { border-color: var(--success); }
     .alert.error { border-color: var(--danger); }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(20px); }
-      to { opacity: 1; transform: translateX(0); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+
+    footer {
+      margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--line);
+      font-size: 11px; color: var(--muted); line-height: 1.7; max-width: 80ch;
     }
 
-    /* ============================================
-       FOOTER (Riot disclaimer)
-       ============================================ */
-    footer {
-      max-width: 1280px;
-      margin: 40px auto 0;
-      padding: 20px;
-      font-size: 11px;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.6;
-      border-top: 1px solid var(--border);
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .tagline { display: none; }
+      .topbar { grid-template-columns: 1fr auto; }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 14px 16px; }
+      .container { padding: 0 16px 48px; }
+      .hero { padding: 44px 0 36px; }
+      .hero h1 .indent { padding-left: 0.9em; }
+      .panel-header, .panel-body { padding-left: 18px; padding-right: 18px; }
+      .panel-title { font-size: 28px; }
+      .row { grid-template-columns: 1fr; gap: 0; }
+      .alert { left: 16px; right: 16px; max-width: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
     }
   </style>
 </head>
@@ -488,6 +246,7 @@
       </svg>
       <span data-i18n="home">Portfólio</span>
     </a>
+    <span class="tagline" data-i18n="tagline">Busque · Monte · Copie</span>
     <div class="lang-toggle">
       <button class="lang-btn active" data-lang="pt" onclick="setLang('pt')">PT</button>
       <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
@@ -498,7 +257,8 @@
 
     <!-- HERO -->
     <div class="hero">
-      <h1>♟️ Rank TFT</h1>
+      <span class="eyebrow">Teamfight Tactics</span>
+      <h1>Rank <span class="indent">TFT</span></h1>
       <p data-i18n="hero_desc">Comandos customizados para exibir o seu rank de Teamfight Tactics em tempo real na Twitch</p>
     </div>
 
@@ -554,7 +314,7 @@
           </div>
 
           <button class="btn" id="searchBtn" onclick="doSearch()">
-            <span id="searchBtnLabel" data-i18n="btn_register">🔍 Buscar / Gerar UUID</span>
+            <span id="searchBtnLabel" data-i18n="btn_register">Buscar / Gerar UUID</span>
           </button>
 
           <!-- Result box (Register mode) -->
@@ -603,7 +363,7 @@
             <textarea id="msgTemplate" placeholder="(player) está (rank) com (pontos) pontos"></textarea>
           </div>
 
-          <button class="btn" onclick="testCommand()" data-i18n="btn_test">▶ Testar comando</button>
+          <button class="btn" onclick="testCommand()" data-i18n="btn_test">Testar comando</button>
 
           <!-- Preview -->
           <div class="preview-box" id="previewBox">
@@ -615,7 +375,7 @@
             </div>
 
             <div class="command-output">
-              <div class="command-output-label" data-i18n="cmd_copy">📋 COMANDO PARA O STREAMELEMENTS</div>
+              <div class="command-output-label" data-i18n="cmd_copy">COMANDO PARA O STREAMELEMENTS</div>
               <div class="command-output-code">
                 <code id="commandCode"></code>
                 <button class="copy-btn" onclick="copyCommand()">COPY</button>
@@ -642,6 +402,7 @@
     const I18N = {
       pt: {
         home: 'Portfólio',
+        tagline: 'Busque · Monte · Copie',
         hero_desc: 'Comandos customizados para exibir o seu rank de Teamfight Tactics em tempo real na Twitch',
         search_title: 'Buscar Jogador',
         step01: 'PASSO 01',
@@ -650,8 +411,8 @@
         lbl_nick: 'Nick',
         lbl_tag: 'Tag',
         lbl_region: 'Região',
-        btn_register: '🔍 Buscar / Gerar UUID',
-        btn_puuid: '🔍 Buscar PUUID',
+        btn_register: 'Buscar / Gerar UUID',
+        btn_puuid: 'Buscar PUUID',
         result_uuid: 'ID asrus (vale p/ LoL, TFT e Valorant)',
         result_uuid_new: 'Novo jogador registrado',
         cmd_title: 'Montar Comando',
@@ -659,9 +420,9 @@
         lbl_queue: 'Fila TFT',
         lbl_vars: 'Variáveis (clique para inserir)',
         lbl_template: 'Template da mensagem',
-        btn_test: '▶ Testar comando',
+        btn_test: 'Testar comando',
         chat_preview: 'PRÉVIA NA TWITCH',
-        cmd_copy: '📋 COMANDO PARA O STREAMELEMENTS',
+        cmd_copy: 'COMANDO PARA O STREAMELEMENTS',
         q_tft: 'Ranqueado TFT',
         q_double: 'Double Up',
         q_turbo: 'Hyper Roll (Turbo)',
@@ -678,6 +439,7 @@
       },
       en: {
         home: 'Portfolio',
+        tagline: 'Search · Build · Copy',
         hero_desc: 'Custom commands to display your Teamfight Tactics rank in real time on Twitch',
         search_title: 'Search Player',
         step01: 'STEP 01',
@@ -686,8 +448,8 @@
         lbl_nick: 'Name',
         lbl_tag: 'Tag',
         lbl_region: 'Region',
-        btn_register: '🔍 Search / Generate UUID',
-        btn_puuid: '🔍 Get PUUID',
+        btn_register: 'Search / Generate UUID',
+        btn_puuid: 'Get PUUID',
         result_uuid: 'asrus ID (works for LoL, TFT & Valorant)',
         result_uuid_new: 'New player registered',
         cmd_title: 'Build Command',
@@ -695,9 +457,9 @@
         lbl_queue: 'TFT Queue',
         lbl_vars: 'Variables (click to insert)',
         lbl_template: 'Message template',
-        btn_test: '▶ Test command',
+        btn_test: 'Test command',
         chat_preview: 'TWITCH PREVIEW',
-        cmd_copy: '📋 COMMAND FOR STREAMELEMENTS',
+        cmd_copy: 'COMMAND FOR STREAMELEMENTS',
         q_tft: 'Ranked TFT',
         q_double: 'Double Up',
         q_turbo: 'Hyper Roll (Turbo)',
