@@ -15,7 +15,7 @@ O `rank-tft` segue **a mesma arquitetura**, mas com uma mudança importante na g
 
 Formato do comando gerado pelo site:
 ```
-$(customapi https://www.asrus.app/cmd/tft/PUUID?msg=(player) está (rank) com (pontos) pontos)
+$(customapi https://api.asrus.app/tft/cmd/PUUID?msg=(player) está (rank) com (pontos) pontos)
 ```
 
 Se o usuário não preencher template e clicar em "Testar comando", é usado o padrão:
