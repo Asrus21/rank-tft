@@ -1,11 +1,15 @@
 {
   "name": "rank-tft",
   "version": "1.0.0",
-  "description": "Sistema de UUID persistente + comandos customizados para rank de TFT (asrus.app/rank-tft)",
+  "description": "Rank de TFT + comandos customizados para o chat (elorank-games.com.br/rank-tft)",
   "main": "server.js",
   "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler deploy --dry-run --outdir dist",
+    "test": "node --test test/*.test.js",
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "legado:dev": "node --watch server.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -16,6 +20,11 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "pg": "^8.13.1",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "hono": "^4.13.13",
+    "@neondatabase/serverless": "^1.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.151.1"
   }
 }

@@ -1,297 +1,110 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!doctype html>
+<html lang="pt-BR" data-jogo="tft">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rank TFT — asrus.app</title>
-  <!-- Favicon embutido, para a aba nunca ficar sem ícone. -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%99%9F%EF%B8%8F</text></svg>" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rank TFT — EloRank Games</title>
+  <meta name="description" content="Busque o rank de Teamfight Tactics de qualquer jogador e gere o comando pronto para o chat da sua live no StreamElements.">
+  <link rel="canonical" href="https://elorank-games.com.br/rank-tft">
+  <meta name="theme-color" content="#040506">
+  <link rel="icon" href="https://elorank-games.com.br/favicon.svg" type="image/svg+xml">
+  <!-- Design system compartilhado: o script vem antes do CSS (aplica o tema sem piscar). -->
+  <script src="https://elorank-games.com.br/ds/elorank.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://elorank-games.com.br/ds/elorank.css">
   <style>
-    /* ============================================
-       Referência: EPIC agency, no Refero Styles ("violet observatory
-       with gilded instruments"). Céu berinjela, tudo em lavanda-luar,
-       e o dourado como joia — pouco e só onde importa. Título em serifa
-       Garamond grande e assimétrico; interface em Inter com rótulos em
-       caixa-alta bem espaçados; ações como pílulas contornadas que se
-       enchem no hover. Combina com o roxo e o ouro do próprio TFT.
-       ============================================ */
-    :root {
-      --bg: #271a47;            /* Aubergine Canvas */
-      --bg-deep: #1d1336;
-      --panel: rgba(219, 201, 255, 0.04);
-      --panel-2: rgba(219, 201, 255, 0.07);
-      --line: rgba(219, 201, 255, 0.14);
-      --line-strong: rgba(219, 201, 255, 0.32);
-      --text: #dbc9ff;          /* Moonlight Lavender */
-      --text-strong: #f3ecff;
-      --muted: rgba(219, 201, 255, 0.62);
-      --gold: #bc994e;          /* Gilded Brass */
-      --gold-soft: rgba(188, 153, 78, 0.14);
-      --ink: #000000;           /* Obsidian */
-      --success: #9fe0b8;
-      --danger: #ff9db0;
-      --serif: 'Cormorant Garamond', 'Times New Roman', serif;
-      --sans: 'Inter', system-ui, -apple-system, sans-serif;
-      --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: var(--sans);
-      background:
-        radial-gradient(900px 500px at 80% -10%, rgba(219, 201, 255, 0.10), transparent 60%),
-        var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      font-size: 14px;
-      line-height: 1.65;
-      letter-spacing: 0.036em;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    :focus-visible { outline: 1px solid var(--text); outline-offset: 3px; }
-
-    /* Rótulo editorial: caixa-alta pequena com tracking aberto. */
-    .eyebrow, label, .panel-badge, .result-label, .chat-mock-header, .command-output-label {
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.111em;
-    }
-
-    /* ============================================
-       TOPO — marca à esquerda, lema no centro, pílula de idioma à direita,
-       e um fio de 1px em lavanda cruzando a página.
-       ============================================ */
-    .topbar {
-      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
-      padding: 18px 32px; border-bottom: 1px solid var(--line);
-    }
-    .home-btn {
-      justify-self: start; display: inline-flex; align-items: center; gap: 8px;
-      color: var(--text); text-decoration: none; font-size: 13px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.111em; border-radius: 30px; padding: 6px 4px;
-      transition: color 0.2s ease;
-    }
-    .home-btn:hover { color: var(--gold); }
-    .home-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; }
-    .tagline { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5em; color: var(--text); white-space: nowrap; }
-    .lang-toggle { justify-self: end; display: inline-flex; border: 1px solid var(--text); border-radius: 30px; padding: 2px; }
-    .lang-btn {
-      border: none; background: transparent; color: var(--text); font: inherit; font-size: 12px;
-      font-weight: 600; padding: 4px 12px; border-radius: 30px; cursor: pointer; letter-spacing: 0.08em;
-      transition: background 0.2s ease, color 0.2s ease;
-    }
-    .lang-btn.active { background: var(--text); color: var(--bg); }
-
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 32px 64px; }
-
-    /* ============================================
-       HERO — a serifa carrega a página. A segunda linha recua para a
-       direita (a composição assimétrica do EPIC).
-       ============================================ */
-    .hero { padding: 72px 0 56px; }
-    .hero .eyebrow { color: var(--gold); margin-bottom: 18px; display: block; }
-    .hero h1 {
-      font-family: var(--serif); font-weight: 400; color: var(--text);
-      font-size: clamp(64px, 12vw, 128px); line-height: 0.95; letter-spacing: -0.01em;
-    }
-    .hero h1 .indent { display: block; padding-left: 1.4em; font-style: italic; color: var(--text-strong); }
-    .hero p { max-width: 44ch; margin-top: 28px; font-size: 16px; line-height: 1.7; color: var(--muted); }
-
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-    /* ============================================
-       PAINÉIS — cartões de 10px, quase transparentes sobre o céu, com o
-       cabeçalho no formato de "entrada de diário": título + data/rótulo.
-       ============================================ */
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-    .panel-header {
-      display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
-      padding: 22px 24px 18px; border-bottom: 1px solid var(--line);
-    }
-    .panel-title { font-family: var(--serif); font-size: 34px; font-weight: 400; line-height: 1.1; color: var(--text-strong); letter-spacing: 0; }
-    .panel-badge { color: var(--gold); white-space: nowrap; }
-    .panel-body { padding: 24px; }
-
-    .search-tabs { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--line-strong); border-radius: 30px; margin-bottom: 22px; }
-    .search-tab {
-      padding: 7px 16px; border-radius: 30px; cursor: pointer; font-size: 12px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.111em; color: var(--muted);
-      transition: background 0.2s ease, color 0.2s ease;
-    }
-    .search-tab:hover { color: var(--text); }
-    .search-tab.active { background: var(--text); color: var(--bg); }
-
-    .form-group { margin-bottom: 18px; }
-    label { display: block; color: var(--muted); margin-bottom: 8px; }
-    input, select, textarea {
-      width: 100%; padding: 12px 14px; background: rgba(0, 0, 0, 0.18); color: var(--text-strong);
-      border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: 14px; letter-spacing: 0.02em;
-      transition: border-color 0.2s ease;
-    }
-    input::placeholder, textarea::placeholder { color: rgba(219, 201, 255, 0.38); }
-    input:hover, select:hover, textarea:hover { border-color: var(--line-strong); }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--text); }
-    select option { background: var(--bg); color: var(--text); }
-    textarea { min-height: 84px; resize: vertical; font-family: var(--mono); font-size: 13px; line-height: 1.6; letter-spacing: 0; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    /* Ação: pílula contornada em lavanda com seta; enche no hover. */
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
-      padding: 13px 22px; background: transparent; color: var(--text); border: 1px solid var(--text);
-      border-radius: 30px; font: inherit; font-size: 13px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.111em; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
-    }
-    .btn::after { content: "→"; font-size: 15px; letter-spacing: 0; }
-    .btn:hover { background: var(--text); color: var(--bg); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; background: transparent; color: var(--text); }
-    .btn-secondary { border-color: var(--line-strong); color: var(--muted); }
-    .btn-secondary:hover { background: var(--panel-2); color: var(--text); }
-
-    /* Resultado: uma "entrada de diário" com o PUUID. */
-    .result-box { display: none; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); animation: fadeIn 0.3s; }
-    .result-box.show { display: block; }
-    .result-label { color: var(--gold); margin-bottom: 10px; }
-    .result-code, .command-output-code {
-      display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px;
-      background: rgba(0, 0, 0, 0.22); border: 1px solid var(--line); border-radius: 10px;
-    }
-    .result-code code, .command-output-code code {
-      flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0;
-      color: var(--text-strong); word-break: break-all; line-height: 1.6;
-    }
-    .copy-btn {
-      flex: none; padding: 6px 14px; background: transparent; color: var(--gold);
-      border: 1px solid var(--gold); border-radius: 30px; font: inherit; font-size: 11px; font-weight: 600;
-      letter-spacing: 0.111em; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
-    }
-    .copy-btn:hover { background: var(--gold); color: var(--bg); }
-    .player-info { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; font-size: 13px; color: var(--muted); }
-    .player-info strong { color: var(--text-strong); font-weight: 600; }
-
-    /* Variáveis: pílulas contornadas, o dourado aparece no hover. */
-    .vars-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-    .var-chip {
-      padding: 5px 12px; border: 1px solid var(--line-strong); border-radius: 30px; cursor: pointer;
-      font-family: var(--mono); font-size: 12px; letter-spacing: 0; color: var(--text);
-      transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
-    }
-    .var-chip:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
-
-    .preview-box { display: none; margin-top: 22px; animation: fadeIn 0.3s; }
-    .preview-box.show { display: block; }
-    /* A prévia do chat é o bloco de mídia: obsidiana pura, como o showreel. */
-    .chat-mock { background: var(--ink); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
-    .chat-mock-header { color: var(--muted); margin-bottom: 10px; }
-    .chat-line { font-size: 14px; color: #efeaff; line-height: 1.6; word-break: break-word; }
-    .chat-line .bot { color: var(--gold); font-weight: 700; margin-right: 8px; }
-    .command-output-label { color: var(--muted); margin-bottom: 8px; }
-
-    .alert {
-      position: fixed; top: 84px; right: 24px; z-index: 200; max-width: 360px;
-      padding: 12px 18px; background: var(--bg-deep); color: var(--text-strong);
-      border: 1px solid var(--line-strong); border-radius: 30px; font-size: 13px; font-weight: 600;
-      animation: slideIn 0.3s;
-    }
-    .alert.success { border-color: var(--success); }
-    .alert.error { border-color: var(--danger); }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
-
-    footer {
-      margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--line);
-      font-size: 11px; color: var(--muted); line-height: 1.7; max-width: 80ch;
-    }
-
-    @media (max-width: 980px) {
-      .grid { grid-template-columns: 1fr; }
-      .tagline { display: none; }
-      .topbar { grid-template-columns: 1fr auto; }
-    }
-    @media (max-width: 560px) {
-      .topbar { padding: 14px 16px; }
-      .container { padding: 0 16px 48px; }
-      .hero { padding: 44px 0 36px; }
-      .hero h1 .indent { padding-left: 0.9em; }
-      .panel-header, .panel-body { padding-left: 18px; padding-right: 18px; }
-      .panel-title { font-size: 28px; }
-      .row { grid-template-columns: 1fr; gap: 0; }
-      .alert { left: 16px; right: 16px; max-width: none; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
-    }
+    /* Só o layout desta página; componentes e cores vêm do /ds/elorank.css. */
+    .hero { position: relative; isolation: isolate; padding: var(--s10) 0 var(--s6); display: grid; gap: var(--s2); justify-items: start; }
+    .hero .er-lead { max-width: 560px; }
+    .etapas { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); align-items: start; }
+    @media (max-width: 900px) { .etapas { grid-template-columns: 1fr; } }
+    .etapas .er-card { padding: var(--s3); }
+    .busca-modo { margin-bottom: var(--s3); }
+    .largo { width: 100%; }
+    .conteudo { padding-bottom: var(--s10); }
+    .resultado { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--badge); display: grid; gap: 12px; }
+    .resultado-titulo { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+    .resultado-titulo::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+    .jogador-info { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--text-2); }
+    .jogador-info strong { color: var(--text); font-weight: 500; }
+    .previa { margin-top: var(--s3); display: grid; gap: var(--s2); }
+    .dica { margin: 0; font-size: 13px; color: var(--text-3); }
+    .er-nav-links a[aria-current="page"] { color: var(--text); }
+    .er-footer .legal { margin: 0 0 var(--s2); max-width: 720px; line-height: 1.6; }
   </style>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-marca" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5 22.5 12 12 22.5 1.5 12Z"/><path style="fill:var(--canvas)" d="M12 7.5 16.5 12 12 16.5 7.5 12Z"/></symbol>
+    <symbol id="i-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></symbol>
+  </svg>
 
-  <!-- ============================================
-       TOP BAR
-       ============================================ -->
-  <div class="topbar">
-    <a href="https://www.asrus.app/" class="home-btn" id="homeBtn"
-       aria-label="Início" data-i18n-aria="home">
-      <!-- Ícone embutido (casa), para o botão nunca ficar vazio. -->
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M3 11.5 12 4l9 7.5" />
-        <path d="M5.5 9.5V20h13V9.5" />
-        <path d="M10 20v-5.5h4V20" />
-      </svg>
-      <span data-i18n="home">Início</span>
-    </a>
-    <span class="tagline" data-i18n="tagline">Busque · Monte · Copie</span>
-    <div class="lang-toggle">
-      <button class="lang-btn active" data-lang="pt" onclick="setLang('pt')">PT</button>
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
-    </div>
+  <div class="er-container er-nav-wrap" id="topo">
+    <nav class="er-nav" aria-label="Principal">
+      <span class="er-nav-marca">
+        <a class="er-brand" href="https://elorank-games.com.br/" aria-label="EloRank Games — página inicial">
+          <svg class="er-brand-mark" aria-hidden="true"><use href="#i-marca"/></svg>
+          <span class="er-brand-nome">EloRank Games</span>
+        </a>
+        <a class="er-nav-projeto" href="#topo" data-er-topo>TFT</a>
+      </span>
+      <div class="er-nav-links">
+        <a href="https://elorank-games.com.br/rank-valorant/">Valorant</a>
+        <a href="https://elorank-games.com.br/rank-lol">League of Legends</a>
+        <a href="https://elorank-games.com.br/rank-tft" aria-current="page">TFT</a>
+      </div>
+      <div class="er-nav-acoes">
+        <div class="er-seg er-seg-sm" role="group" aria-label="Idioma">
+          <button type="button" data-lang="pt" aria-pressed="true">PT</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+        <button class="er-theme-toggle" type="button" data-er-tema aria-label="Mudar tema">
+          <svg class="er-i-sol" aria-hidden="true"><use href="#i-sol"/></svg>
+          <svg class="er-i-lua" aria-hidden="true"><use href="#i-lua"/></svg>
+        </button>
+      </div>
+    </nav>
   </div>
 
-  <div class="container">
+  <main class="er-container conteudo">
+    <header class="hero">
+      <div class="er-atmos" aria-hidden="true"></div>
+      <span class="er-badge er-badge-dot">Teamfight Tactics</span>
+      <h1 class="er-display">Rank TFT</h1>
+      <p class="er-lead" data-i18n="hero_desc">Busque o jogador, monte a mensagem e copie o comando pronto para o chat da sua live.</p>
+    </header>
 
-    <!-- HERO -->
-    <div class="hero">
-      <span class="eyebrow">Teamfight Tactics</span>
-      <h1>Rank <span class="indent">TFT</span></h1>
-      <p data-i18n="hero_desc">Comandos customizados para exibir o seu rank de Teamfight Tactics em tempo real na Twitch</p>
-    </div>
-
-    <div class="grid">
-
-      <!-- ============================================
-           ESQUERDA: SEARCH
-           ============================================ -->
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title" data-i18n="search_title">Buscar Jogador</div>
-          <div class="panel-badge" data-i18n="step01">PASSO 01</div>
+    <div class="etapas">
+      <!-- PASSO 1: buscar jogador -->
+      <section class="er-card" aria-labelledby="t-busca">
+        <div class="er-card-head">
+          <h2 class="er-h3" id="t-busca" data-i18n="search_title">Buscar jogador</h2>
+          <span class="er-badge" data-i18n="step01">Passo 1</span>
         </div>
-        <div class="panel-body">
 
-          <!-- Search mode tabs -->
-          <div class="search-tabs">
-            <div class="search-tab active" data-search-mode="register" onclick="setSearchMode('register')" data-i18n="search_register">Nick + Tag</div>
-            <div class="search-tab" data-search-mode="puuid" onclick="setSearchMode('puuid')" data-i18n="search_puuid">PUUID</div>
-          </div>
+        <div class="er-seg busca-modo" role="tablist" aria-label="Tipo de busca">
+          <button type="button" role="tab" data-search-mode="register" aria-selected="true" data-i18n="search_register">Nick + Tag</button>
+          <button type="button" role="tab" data-search-mode="puuid" aria-selected="false" data-i18n="search_puuid">Só o PUUID</button>
+        </div>
 
-          <!-- FORM -->
-          <div class="row">
-            <div class="form-group">
-              <label data-i18n="lbl_nick">Nick</label>
-              <input type="text" id="gameName" placeholder="ex: asrus" autocomplete="off" />
+        <form id="formBusca" novalidate>
+          <div class="er-row">
+            <div class="er-field">
+              <label class="er-label" for="gameName" data-i18n="lbl_nick">Nick</label>
+              <input class="er-input" type="text" id="gameName" placeholder="ex: asrus" autocomplete="off" spellcheck="false">
             </div>
-            <div class="form-group">
-              <label data-i18n="lbl_tag">Tag</label>
-              <input type="text" id="tagLine" placeholder="ex: BR1" autocomplete="off" maxlength="5" />
+            <div class="er-field">
+              <label class="er-label" for="tagLine" data-i18n="lbl_tag">Tag</label>
+              <input class="er-input" type="text" id="tagLine" placeholder="ex: BR1" autocomplete="off" spellcheck="false" maxlength="5">
             </div>
           </div>
 
-          <div class="form-group">
-            <label data-i18n="lbl_region">Região</label>
-            <select id="region">
+          <div class="er-field">
+            <label class="er-label" for="region" data-i18n="lbl_region">Região</label>
+            <select class="er-input er-select" id="region">
               <option value="br1">Brasil (BR1)</option>
               <option value="na1">North America (NA1)</option>
               <option value="la1">LAN — Latin America North (LA1)</option>
@@ -310,120 +123,115 @@
             </select>
           </div>
 
-          <button class="btn" id="searchBtn" onclick="doSearch()">
-            <span id="searchBtnLabel" data-i18n="btn_register">Buscar / Gerar UUID</span>
+          <button class="er-btn er-btn-primary largo" type="submit" id="searchBtn">
+            <span id="searchBtnLabel">Buscar jogador</span>
           </button>
+        </form>
 
-          <!-- Result box (Register mode) -->
-          <div class="result-box" id="registerResult">
-            <div class="result-label" id="registerResultLabel">✓ <span data-i18n="result_uuid">PUUID encontrado</span></div>
-            <div class="result-code">
-              <code id="puuidValue"></code>
-              <button class="copy-btn" onclick="copyPuuid()">COPY</button>
-            </div>
-            <div class="player-info">
-              <span>👤 <strong id="playerNameDisplay"></strong></span>
-              <span>🌎 <strong id="playerRegionDisplay"></strong></span>
-              <span id="newBadge" style="color: var(--success);"></span>
-            </div>
+        <div class="resultado er-surge" id="registerResult" hidden aria-live="polite">
+          <div class="resultado-titulo" id="registerResultLabel"></div>
+          <div class="er-copy">
+            <code class="er-code" id="puuidValue"></code>
+            <button class="er-btn er-btn-ghost er-btn-sm" type="button" id="copyId" data-i18n="copy">Copiar</button>
           </div>
-
+          <div class="jogador-info">
+            <span><span data-i18n="player">Jogador</span>: <strong id="playerNameDisplay"></strong></span>
+            <span><span data-i18n="region">Região</span>: <strong id="playerRegionDisplay"></strong></span>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <!-- ============================================
-           DIREITA: COMANDO
-           ============================================ -->
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title" data-i18n="cmd_title">Montar Comando</div>
-          <div class="panel-badge" data-i18n="step02">PASSO 02</div>
+      <!-- PASSO 2: montar comando -->
+      <section class="er-card" aria-labelledby="t-cmd">
+        <div class="er-card-head">
+          <h2 class="er-h3" id="t-cmd" data-i18n="cmd_title">Montar comando</h2>
+          <span class="er-badge" data-i18n="step02">Passo 2</span>
         </div>
-        <div class="panel-body">
 
-          <div class="form-group">
-            <label data-i18n="lbl_queue">Fila TFT</label>
-            <select id="queueSelect">
-              <option value="tft" data-i18n-option="q_tft">Ranqueado TFT</option>
-              <option value="tft_double_up" data-i18n-option="q_double">Double Up</option>
-              <option value="tft_turbo" data-i18n-option="q_turbo">Hyper Roll (Turbo)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label data-i18n="lbl_vars">Variáveis (clique para inserir)</label>
-            <div class="vars-grid" id="varsGrid"></div>
-          </div>
-
-          <div class="form-group">
-            <label data-i18n="lbl_template">Template da mensagem</label>
-            <textarea id="msgTemplate" placeholder="(player) está (rank) com (pontos) pontos"></textarea>
-          </div>
-
-          <button class="btn" onclick="testCommand()" data-i18n="btn_test">Testar comando</button>
-
-          <!-- Preview -->
-          <div class="preview-box" id="previewBox">
-            <div class="chat-mock">
-              <div class="chat-mock-header" data-i18n="chat_preview">PRÉVIA NA TWITCH</div>
-              <div class="chat-line">
-                <span class="bot">[BOT]</span><span id="chatResult"></span>
-              </div>
-            </div>
-
-            <div class="command-output">
-              <div class="command-output-label" data-i18n="cmd_copy">COMANDO PARA O STREAMELEMENTS</div>
-              <div class="command-output-code">
-                <code id="commandCode"></code>
-                <button class="copy-btn" onclick="copyCommand()">COPY</button>
-              </div>
-            </div>
-          </div>
-
+        <div class="er-field">
+          <label class="er-label" for="queueSelect" data-i18n="lbl_queue">Fila</label>
+          <select class="er-input er-select" id="queueSelect">
+            <option value="tft" data-i18n="q_tft">Ranqueado</option>
+            <option value="tft_double_up" data-i18n="q_double">Double Up</option>
+            <option value="tft_turbo" data-i18n="q_turbo">Hyper Roll (Turbo)</option>
+          </select>
         </div>
-      </div>
 
+        <div class="er-field">
+          <span class="er-label" data-i18n="lbl_vars">Variáveis (clique para inserir)</span>
+          <div class="er-chips" id="varsGrid"></div>
+        </div>
+
+        <div class="er-field">
+          <label class="er-label" for="msgTemplate" data-i18n="lbl_template">Mensagem</label>
+          <textarea class="er-input" id="msgTemplate" rows="3" spellcheck="false"></textarea>
+        </div>
+
+        <button class="er-btn er-btn-ghost largo" type="button" id="testBtn" data-i18n="btn_test">Testar comando</button>
+
+        <div class="previa er-surge" id="previewBox" hidden aria-live="polite">
+          <div class="er-chat">
+            <div class="er-chat-bar"><span class="er-eyebrow" data-i18n="chat_preview">Prévia no chat</span></div>
+            <div class="er-chat-linha"><span class="er-chat-quem">BOT</span><span id="chatResult"></span></div>
+          </div>
+          <div class="er-field">
+            <span class="er-label" data-i18n="cmd_copy">Comando para o StreamElements</span>
+            <div class="er-copy">
+              <code class="er-code" id="commandCode"></code>
+              <button class="er-btn er-btn-ghost er-btn-sm" type="button" id="copyCmd" data-i18n="copy">Copiar</button>
+            </div>
+            <p class="dica" data-i18n="cmd_hint">Cole como resposta de um comando novo no StreamElements (ex.: !elotft).</p>
+          </div>
+        </div>
+      </section>
     </div>
+  </main>
 
-    <footer>
-      <span data-i18n="footer_text">
-        asrus.app não é endossado pela Riot Games e não reflete as opiniões da Riot Games ou de quem está envolvido oficialmente com seus produtos. Riot Games e todas as marcas associadas são marcas registradas da Riot Games, Inc.
-      </span>
-    </footer>
-  </div>
+  <footer class="er-footer er-section">
+    <div class="er-container">
+      <p class="legal" data-i18n="footer_text">EloRank Games não é endossado pela Riot Games e não reflete as opiniões da Riot Games ou de quem está envolvido oficialmente com seus produtos. Riot Games, Teamfight Tactics e todas as marcas associadas são marcas registradas da Riot Games, Inc.</p>
+      <div class="er-meta">
+        <span>elorank-games.com.br/rank-tft</span>
+        <span>Teamfight Tactics</span>
+        <span>feito por asrus</span>
+      </div>
+    </div>
+  </footer>
 
   <script>
     // ============================================
-    // I18N
+    // TEXTOS (PT / EN)
     // ============================================
     const I18N = {
       pt: {
-        home: 'Início',
-        tagline: 'Busque · Monte · Copie',
-        hero_desc: 'Comandos customizados para exibir o seu rank de Teamfight Tactics em tempo real na Twitch',
-        search_title: 'Buscar Jogador',
-        step01: 'PASSO 01',
+        hero_desc: 'Busque o jogador, monte a mensagem e copie o comando pronto para o chat da sua live.',
+        search_title: 'Buscar jogador',
+        step01: 'Passo 1',
         search_register: 'Nick + Tag',
-        search_puuid: 'PUUID',
+        search_puuid: 'Só o PUUID',
         lbl_nick: 'Nick',
         lbl_tag: 'Tag',
         lbl_region: 'Região',
-        btn_register: 'Buscar / Gerar UUID',
+        btn_register: 'Buscar jogador',
         btn_puuid: 'Buscar PUUID',
-        result_uuid: 'ID asrus (vale p/ LoL, TFT e Valorant)',
-        result_uuid_new: 'Novo jogador registrado',
-        cmd_title: 'Montar Comando',
-        step02: 'PASSO 02',
-        lbl_queue: 'Fila TFT',
+        result_uuid: 'ID EloRank (vale para LoL, TFT e Valorant)',
+        result_uuid_new: 'Jogador registrado — ID EloRank',
+        copy: 'Copiar',
+        player: 'Jogador',
+        region: 'Região',
+        cmd_title: 'Montar comando',
+        step02: 'Passo 2',
+        lbl_queue: 'Fila',
         lbl_vars: 'Variáveis (clique para inserir)',
-        lbl_template: 'Template da mensagem',
+        lbl_template: 'Mensagem',
         btn_test: 'Testar comando',
-        chat_preview: 'PRÉVIA NA TWITCH',
-        cmd_copy: 'COMANDO PARA O STREAMELEMENTS',
-        q_tft: 'Ranqueado TFT',
+        chat_preview: 'Prévia no chat',
+        cmd_copy: 'Comando para o StreamElements',
+        cmd_hint: 'Cole como resposta de um comando novo no StreamElements (ex.: !elotft).',
+        q_tft: 'Ranqueado',
         q_double: 'Double Up',
         q_turbo: 'Hyper Roll (Turbo)',
-        footer_text: 'asrus.app não é endossado pela Riot Games e não reflete as opiniões da Riot Games ou de quem está envolvido oficialmente com seus produtos. Riot Games e todas as marcas associadas são marcas registradas da Riot Games, Inc.',
+        footer_text: 'EloRank Games não é endossado pela Riot Games e não reflete as opiniões da Riot Games ou de quem está envolvido oficialmente com seus produtos. Riot Games, Teamfight Tactics e todas as marcas associadas são marcas registradas da Riot Games, Inc.',
         toast_no_puuid: 'Busque um jogador primeiro',
         toast_copied: 'Copiado!',
         toast_cmd_copied: 'Comando copiado! Cole na resposta do seu comando no StreamElements',
@@ -432,35 +240,37 @@
         toast_new_player: 'Novo jogador registrado!',
         toast_found: 'Jogador encontrado!',
         toast_err: 'Erro ao buscar jogador',
-        new_badge: '⭐ Novo'
+        toast_copy_fail: 'Não deu para copiar. Selecione o texto e copie manualmente.'
       },
       en: {
-        home: 'Home',
-        tagline: 'Search · Build · Copy',
-        hero_desc: 'Custom commands to display your Teamfight Tactics rank in real time on Twitch',
-        search_title: 'Search Player',
-        step01: 'STEP 01',
+        hero_desc: 'Search the player, build the message and copy the ready-to-use command for your stream chat.',
+        search_title: 'Search player',
+        step01: 'Step 1',
         search_register: 'Name + Tag',
-        search_puuid: 'PUUID',
+        search_puuid: 'PUUID only',
         lbl_nick: 'Name',
         lbl_tag: 'Tag',
         lbl_region: 'Region',
-        btn_register: 'Search / Generate UUID',
+        btn_register: 'Search player',
         btn_puuid: 'Get PUUID',
-        result_uuid: 'asrus ID (works for LoL, TFT & Valorant)',
-        result_uuid_new: 'New player registered',
-        cmd_title: 'Build Command',
-        step02: 'STEP 02',
-        lbl_queue: 'TFT Queue',
+        result_uuid: 'EloRank ID (works for LoL, TFT & Valorant)',
+        result_uuid_new: 'Player registered — EloRank ID',
+        copy: 'Copy',
+        player: 'Player',
+        region: 'Region',
+        cmd_title: 'Build command',
+        step02: 'Step 2',
+        lbl_queue: 'Queue',
         lbl_vars: 'Variables (click to insert)',
-        lbl_template: 'Message template',
+        lbl_template: 'Message',
         btn_test: 'Test command',
-        chat_preview: 'TWITCH PREVIEW',
-        cmd_copy: 'COMMAND FOR STREAMELEMENTS',
-        q_tft: 'Ranked TFT',
+        chat_preview: 'Chat preview',
+        cmd_copy: 'Command for StreamElements',
+        cmd_hint: 'Paste it as the response of a new StreamElements command (e.g. !elotft).',
+        q_tft: 'Ranked',
         q_double: 'Double Up',
         q_turbo: 'Hyper Roll (Turbo)',
-        footer_text: 'asrus.app isn\'t endorsed by Riot Games and doesn\'t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.',
+        footer_text: 'EloRank Games isn\'t endorsed by Riot Games and doesn\'t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, Teamfight Tactics and all associated properties are trademarks or registered trademarks of Riot Games, Inc.',
         toast_no_puuid: 'Search a player first',
         toast_copied: 'Copied!',
         toast_cmd_copied: 'Command copied! Paste into your StreamElements command response',
@@ -469,273 +279,210 @@
         toast_new_player: 'New player registered!',
         toast_found: 'Player found!',
         toast_err: 'Error searching player',
-        new_badge: '⭐ New'
+        toast_copy_fail: 'Could not copy. Select the text and copy it manually.'
       }
     };
 
-    let currentLang = (localStorage.getItem('ranktft_lang') === 'en') ? 'en' : 'pt';
-    let currentSearchMode = 'register'; // 'register' | 'puuid'
-    let currentPuuid = null;       // account_id (ID do zero) — usado nas URLs
-    let currentRiotPuuid = null;   // puuid real da Riot — usado só no preview
-    let currentPlayerName = null;
-    let currentRegion = null;
+    // Subdomínio das APIs de jogos: api.elorank-games.com.br/tft/... é o que vai no bot.
+    const API_CMD = 'https://api.elorank-games.com.br';
+    const VARS_LIST = ['player', 'tag', 'region', 'modo', 'rank', 'tier', 'divisao', 'pontos', 'vitorias', 'derrotas', 'winrate', 'jogos'];
 
-    const VARS_LIST = [
-      'player', 'tag', 'region', 'modo',
-      'rank', 'tier', 'divisao', 'pontos',
-      'vitorias', 'derrotas', 'winrate', 'jogos'
-    ];
+    function lerIdioma() {
+      try { return localStorage.getItem('ranktft_lang') === 'en' ? 'en' : 'pt'; } catch (e) { return 'pt'; }
+    }
+
+    let currentLang = lerIdioma();
+    let currentSearchMode = 'register'; // 'register' | 'puuid'
+    let currentPuuid = null;            // account_id (ID EloRank) — vai na URL do comando
+    let currentRiotPuuid = null;        // puuid real da Riot — só para a prévia
+
+    const $ = (id) => document.getElementById(id);
+    const t = (key) => I18N[currentLang][key] || key;
+    const templatePadrao = () => currentLang === 'pt'
+      ? '(player) está (rank) com (pontos) pontos'
+      : '(player) is (rank) with (pontos) points';
 
     // ============================================
-    // I18N HELPERS
+    // IDIOMA
     // ============================================
     function setLang(lang) {
       currentLang = lang;
-      localStorage.setItem('ranktft_lang', lang);
-      document.documentElement.lang = (lang === 'pt') ? 'pt-BR' : 'en';
-      document.title = (lang === 'pt') ? 'Rank TFT — asrus.app' : 'Rank TFT — asrus.app';
-
-      document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.lang === lang);
+      try { localStorage.setItem('ranktft_lang', lang); } catch (e) { /* só nesta visita */ }
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+      document.querySelectorAll('[data-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const txt = I18N[lang][el.dataset.i18n];
+        if (txt) el.textContent = txt;
       });
-
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.dataset.i18n;
-        if (I18N[lang][key]) el.textContent = I18N[lang][key];
-      });
-
-      document.querySelectorAll('[data-i18n-option]').forEach(opt => {
-        const key = opt.dataset.i18nOption;
-        if (I18N[lang][key]) opt.textContent = I18N[lang][key];
-      });
-
-      // Nome acessível de quem perde o rótulo visível em telas estreitas.
-      document.querySelectorAll('[data-i18n-aria]').forEach(el => {
-        const key = el.dataset.i18nAria;
-        if (I18N[lang][key]) el.setAttribute('aria-label', I18N[lang][key]);
-      });
-
-      // search button label depends on mode
+      $('msgTemplate').placeholder = templatePadrao();
       updateSearchButtonLabel();
-
-      // re-render vars (no change in keys, but keeps consistency)
-      renderVars();
-
-      // default template placeholder
-      const tpl = document.getElementById('msgTemplate');
-      tpl.placeholder = (lang === 'pt')
-        ? '(player) está (rank) com (pontos) pontos'
-        : '(player) is (rank) with (pontos) points';
-    }
-
-    function t(key) {
-      return I18N[currentLang][key] || key;
     }
 
     // ============================================
-    // SEARCH MODE
+    // MODO DE BUSCA
     // ============================================
     function setSearchMode(mode) {
       currentSearchMode = mode;
-      document.querySelectorAll('.search-tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.searchMode === mode);
-      });
+      document.querySelectorAll('[data-search-mode]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.searchMode === mode)));
       updateSearchButtonLabel();
-      // hide previous result
-      document.getElementById('registerResult').classList.remove('show');
+      $('registerResult').hidden = true;
     }
 
     function updateSearchButtonLabel() {
-      const lbl = document.getElementById('searchBtnLabel');
-      lbl.textContent = (currentSearchMode === 'register') ? t('btn_register') : t('btn_puuid');
+      $('searchBtnLabel').textContent = currentSearchMode === 'register' ? t('btn_register') : t('btn_puuid');
     }
 
     // ============================================
-    // VARS
+    // VARIÁVEIS
     // ============================================
     function renderVars() {
-      const grid = document.getElementById('varsGrid');
-      grid.innerHTML = '';
-      VARS_LIST.forEach(v => {
-        const chip = document.createElement('span');
-        chip.className = 'var-chip';
+      const grid = $('varsGrid');
+      grid.textContent = '';
+      VARS_LIST.forEach((v) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'er-chip';
         chip.textContent = `(${v})`;
-        chip.onclick = () => insertVar(`(${v})`);
+        chip.addEventListener('click', () => insertVar(`(${v})`));
         grid.appendChild(chip);
       });
     }
 
     function insertVar(varText) {
-      const ta = document.getElementById('msgTemplate');
+      const ta = $('msgTemplate');
       const start = ta.selectionStart;
       const end = ta.selectionEnd;
-      const v = ta.value;
-      ta.value = v.slice(0, start) + varText + v.slice(end);
+      ta.value = ta.value.slice(0, start) + varText + ta.value.slice(end);
       ta.focus();
       ta.setSelectionRange(start + varText.length, start + varText.length);
     }
 
     // ============================================
-    // SEARCH
+    // BUSCA
     // ============================================
     async function doSearch() {
-      const gameName = document.getElementById('gameName').value.trim();
-      const tagLine = document.getElementById('tagLine').value.trim().replace(/^#/, '');
-      const region = document.getElementById('region').value;
+      const gameName = $('gameName').value.trim();
+      const tagLine = $('tagLine').value.trim().replace(/^#/, '');
+      const region = $('region').value;
 
       if (!gameName || !tagLine || !region) {
-        showAlert(t('toast_fill'), 'error');
+        showAlert(t('toast_fill'), 'erro');
         return;
       }
 
-      const btn = document.getElementById('searchBtn');
+      const btn = $('searchBtn');
       btn.disabled = true;
-      const lbl = document.getElementById('searchBtnLabel');
-      const original = lbl.textContent;
-      lbl.textContent = t('toast_searching');
+      $('searchBtnLabel').textContent = t('toast_searching');
 
       try {
-        const endpoint = (currentSearchMode === 'register') ? '/api/tft/register' : '/api/tft/puuid';
+        const endpoint = currentSearchMode === 'register' ? '/api/tft/register' : '/api/tft/puuid';
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ gameName, tagLine, region })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'erro');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || t('toast_err'));
 
-        // ID gerado do zero (vale para LoL, TFT e Valorant). Guardamos o puuid
-        // real separado só para o preview.
         currentPuuid = data.account_id || data.riot_puuid;
         currentRiotPuuid = data.riot_puuid;
-        currentPlayerName = `${data.game_name}#${data.tag_line}`;
-        currentRegion = data.region;
 
-        // mostra resultado
-        document.getElementById('puuidValue').textContent = currentPuuid;
-        document.getElementById('playerNameDisplay').textContent = currentPlayerName;
-        document.getElementById('playerRegionDisplay').textContent = (data.region || currentRegion || '').toUpperCase();
-
-        // label muda conforme modo + se é novo
-        const labelEl = document.getElementById('registerResultLabel');
-        if (currentSearchMode === 'register' && data.is_new) {
-          labelEl.innerHTML = `✓ ${t('result_uuid_new')}`;
-        } else {
-          labelEl.innerHTML = `✓ ${t('result_uuid')}`;
-        }
-
-        // badge "novo"
-        const badge = document.getElementById('newBadge');
-        badge.textContent = (currentSearchMode === 'register' && data.is_new) ? t('new_badge') : '';
-
-        document.getElementById('registerResult').classList.add('show');
-        showAlert(data.is_new ? t('toast_new_player') : t('toast_found'), 'success');
+        $('puuidValue').textContent = currentPuuid;
+        $('playerNameDisplay').textContent = `${data.game_name}#${data.tag_line}`;
+        $('playerRegionDisplay').textContent = (data.region || '').toUpperCase();
+        const novo = currentSearchMode === 'register' && data.is_new;
+        $('registerResultLabel').textContent = novo ? t('result_uuid_new') : t('result_uuid');
+        $('registerResult').hidden = false;
+        showAlert(novo ? t('toast_new_player') : t('toast_found'), 'ok');
       } catch (err) {
-        showAlert(err.message || t('toast_err'), 'error');
+        showAlert(err.message || t('toast_err'), 'erro');
       } finally {
         btn.disabled = false;
-        lbl.textContent = original;
+        updateSearchButtonLabel();
       }
     }
 
     // ============================================
-    // COPY HELPERS
+    // COPIAR
     // ============================================
-    function copyPuuid() {
-      if (!currentPuuid) return;
-      navigator.clipboard.writeText(currentPuuid);
-      showAlert(t('toast_copied'), 'success');
-    }
-
-    function copyCommand() {
-      const code = document.getElementById('commandCode').textContent;
-      if (!code) return;
-      navigator.clipboard.writeText(code);
-      showAlert(t('toast_cmd_copied'), 'success');
+    async function copiar(texto, aviso) {
+      if (!texto) return;
+      try {
+        await navigator.clipboard.writeText(texto);
+        showAlert(aviso, 'ok');
+      } catch (e) {
+        showAlert(t('toast_copy_fail'), 'erro');
+      }
     }
 
     // ============================================
-    // TEST COMMAND (preview + montar $(customapi ...))
+    // TESTAR COMANDO (prévia + montar o $(customapi ...))
     // ============================================
     async function testCommand() {
       if (!currentPuuid) {
-        showAlert(t('toast_no_puuid'), 'error');
+        showAlert(t('toast_no_puuid'), 'erro');
         return;
       }
 
-      const mode = document.getElementById('queueSelect').value;
-      const tplRaw = document.getElementById('msgTemplate').value;
-      const tpl = tplRaw.trim(); // se vazio, backend usa default
+      const mode = $('queueSelect').value;
+      const tpl = $('msgTemplate').value.trim(); // vazio = o servidor usa o padrão
 
-      // ===== Preview da renderização =====
       try {
         const res = await fetch('/api/tft/preview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            riot_puuid: currentRiotPuuid,
-            msg: tpl,
-            mode,
-            lang: currentLang
-          })
+          body: JSON.stringify({ riot_puuid: currentRiotPuuid, msg: tpl, mode, lang: currentLang })
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'erro');
-
-        document.getElementById('chatResult').textContent = data.result;
+        $('chatResult').textContent = data.result;
       } catch (err) {
-        document.getElementById('chatResult').textContent = `[erro: ${err.message}]`;
+        $('chatResult').textContent = `[${currentLang === 'pt' ? 'erro' : 'error'}: ${err.message}]`;
       }
 
-      // ===== Gerar o $(customapi ...) =====
-      // URL "clean" — só escapa caracteres que realmente quebram a URL (# & ? +).
-      // Parênteses, espaços e acentos ficam crus para legibilidade.
-      // Subdomínio das APIs de jogos: api.asrus.app/tft/... = www.asrus.app/api/tft/...
-      const base = 'https://api.asrus.app';
-      const effectiveTpl = tpl || (currentLang === 'pt'
-        ? '(player) está (rank) com (pontos) pontos'
-        : '(player) is (rank) with (pontos) points');
-
-      // Encoding mínimo: só os caracteres que mudam o sentido da URL
+      // URL legível: só escapa o que muda o sentido da URL (# & ? + %).
       const cleanEncode = (s) => s
-        .replace(/%/g, '%25')   // primeiro o % pra não duplicar escape
+        .replace(/%/g, '%25')
         .replace(/#/g, '%23')
         .replace(/&/g, '%26')
         .replace(/\?/g, '%3F')
         .replace(/\+/g, '%2B');
 
-      const parts = [`msg="${cleanEncode(effectiveTpl)}"`];
+      const parts = [`msg="${cleanEncode(tpl || templatePadrao())}"`];
       if (mode !== 'tft') parts.push(`mode=${mode}`);
       if (currentLang !== 'pt') parts.push(`lang=${currentLang}`);
 
-      const url = `${base}/tft/cmd/${currentPuuid}?${parts.join('&')}`;
-      const fullCommand = `$(customapi ${url})`;
-
-      document.getElementById('commandCode').textContent = fullCommand;
-      document.getElementById('previewBox').classList.add('show');
+      $('commandCode').textContent = `$(customapi ${API_CMD}/tft/cmd/${currentPuuid}?${parts.join('&')})`;
+      $('previewBox').hidden = false;
     }
 
     // ============================================
-    // ALERT
+    // AVISO
     // ============================================
-    function showAlert(msg, type = 'info') {
+    function showAlert(msg, tipo) {
+      document.querySelectorAll('.er-toast').forEach((el) => el.remove());
       const el = document.createElement('div');
-      el.className = `alert ${type}`;
+      el.className = `er-toast er-toast-${tipo || 'ok'}`;
+      el.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
       el.textContent = msg;
       document.body.appendChild(el);
       setTimeout(() => {
         el.style.opacity = '0';
         setTimeout(() => el.remove(), 300);
-      }, 2400);
+      }, 2600);
     }
 
     // ============================================
-    // BOOT
+    // INÍCIO
     // ============================================
-    document.addEventListener('DOMContentLoaded', () => {
-      renderVars();
-      setLang(currentLang);
-    });
+    document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang)));
+    document.querySelectorAll('[data-search-mode]').forEach((b) => b.addEventListener('click', () => setSearchMode(b.dataset.searchMode)));
+    $('formBusca').addEventListener('submit', (e) => { e.preventDefault(); doSearch(); });
+    $('testBtn').addEventListener('click', testCommand);
+    $('copyId').addEventListener('click', () => copiar(currentPuuid, t('toast_copied')));
+    $('copyCmd').addEventListener('click', () => copiar($('commandCode').textContent, t('toast_cmd_copied')));
+    renderVars();
+    setLang(currentLang);
   </script>
 </body>
 </html>
