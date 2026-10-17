@@ -27,8 +27,16 @@ function app(env) {
   return cache.app;
 }
 
+// Caminhos da API; o resto é a página (arquivos de public/).
+const API = /^\/(api\/tft|cmd\/tft)(\/|$)/;
+
 export default {
   fetch(request, env, ctx) {
+    const { pathname } = new URL(request.url);
+    // Normalmente a Cloudflare já entrega os arquivos de public/ antes de
+    // chegar aqui. Mas a chamada pode vir do gateway (Service Binding): aí
+    // entregamos a página explicitamente, para não depender desse detalhe.
+    if (!API.test(pathname) && env.ASSETS) return env.ASSETS.fetch(request);
     return app(env).fetch(request, env, ctx);
   },
 };

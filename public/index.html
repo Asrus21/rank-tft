@@ -9,11 +9,11 @@
   <meta name="theme-color" content="#040506">
   <link rel="icon" href="https://elorank-games.com.br/favicon.svg" type="image/svg+xml">
   <!-- Design system compartilhado: o script vem antes do CSS (aplica o tema sem piscar). -->
-  <script src="https://elorank-games.com.br/ds/elorank.js"></script>
+  <script src="https://elorank-games.com.br/ds/elorank.js?v=3"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="https://elorank-games.com.br/ds/elorank.css">
+  <link rel="stylesheet" href="https://elorank-games.com.br/ds/elorank.css?v=3">
   <style>
     /* Só o layout desta página; componentes e cores vêm do /ds/elorank.css. */
     .hero { position: relative; isolation: isolate; padding: var(--s10) 0 var(--s6); display: grid; gap: var(--s2); justify-items: start; }
@@ -342,7 +342,8 @@
         const chip = document.createElement('button');
         chip.type = 'button';
         chip.className = 'er-chip';
-        chip.textContent = `(${v})`;
+        chip.setAttribute('aria-label', `Inserir (${v})`);
+        chip.innerHTML = `<span class="er-chip-par">(</span>${v}<span class="er-chip-par">)</span>`;
         chip.addEventListener('click', () => insertVar(`(${v})`));
         grid.appendChild(chip);
       });
