@@ -452,7 +452,8 @@
       if (mode !== 'tft') parts.push(`mode=${mode}`);
       if (currentLang !== 'pt') parts.push(`lang=${currentLang}`);
 
-      $('commandCode').textContent = `$(customapi ${API_CMD}/tft/cmd/${currentPuuid}?${parts.join('&')})`;
+      // Endpoint de um comando só (elorank-games.com.br/docs): /tft/elo/id/{id}
+      $('commandCode').textContent = `$(customapi ${API_CMD}/tft/elo/id/${currentPuuid}?${parts.join('&')})`;
       $('previewBox').hidden = false;
     }
 
