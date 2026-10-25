@@ -60,6 +60,8 @@ export function criarRiot(apiKey, fetchImpl = fetch) {
     // puuid → nome e tag atuais
     contaPorPuuid: (regional, puuid) => get(regional, `/riot/account/v1/accounts/by-puuid/${encodeURIComponent(puuid)}`),
     // TFT-LEAGUE-V1: entradas de todas as filas ranqueadas de TFT
+    // TFT-STATUS-V1: incidentes e manutenções da plataforma (usado no /status).
+    statusPlataforma: (platform) => get(platform, "/tft/status/v1/platform-data"),
     ligaTft: (platform, puuid) => get(platform, `/tft/league/v1/by-puuid/${encodeURIComponent(puuid)}`),
   };
 }

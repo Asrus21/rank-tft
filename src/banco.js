@@ -51,6 +51,9 @@ export function criarBanco(q) {
       return schemaPronto;
     },
 
+    // Checagem do /api/tft/status.
+    ping: () => q("SELECT 1"),
+
     async jogadorPorPuuid(puuid) {
       const rows = await q("SELECT * FROM tft_players WHERE riot_puuid = $1", [puuid]);
       return rows[0] || null;

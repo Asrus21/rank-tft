@@ -9,8 +9,12 @@
 //   GET  /api/tft/cmd/:id        comando do bot (texto puro)
 //   GET  /cmd/tft/:id            o mesmo, caminho antigo
 //   GET  /api/tft/cmd?player=    comando por nome: "!rank Nome#Tag"
+//
+// Endpoints de um comando só (/api/tft/elo/*, /api/tft/puuid, /api/tft/status):
+// src/endpoints.js.
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { registrarEndpoints } from "./endpoints.js";
 import { REGION_ROUTING, mapValToRiot } from "./riot.js";
 import { MODOS, applyTemplate, limparMsg, porFila, templatePadrao } from "./template.js";
 
@@ -22,11 +26,16 @@ export function criarApp({ banco, riot }) {
   app.use("/api/*", cors());
 
   // Garante as tabelas antes de qualquer rota que usa o banco.
+  // Os endpoints de um comando só não criam tabelas: vão direto à Riot (e, no
+  // /elo/id, a uma leitura da accounts).
+  const SEM_SCHEMA = /^\/api\/tft\/(health|elo|puuid|status)(\/|$)/;
   app.use("*", async (c, next) => {
-    if (c.req.path === "/api/tft/health") return next();
+    if (SEM_SCHEMA.test(c.req.path)) return next();
     await banco.garantirSchema();
     return next();
   });
+
+  registrarEndpoints(app, { banco, riot });
 
   // Nome/tag atuais + ranks de TFT. Atualiza o nome salvo se o jogador trocou.
   async function dadosDoJogador(player) {

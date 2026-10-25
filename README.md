@@ -49,6 +49,26 @@ $(customapi https://api.elorank-games.com.br/tft/cmd/ID?msg="(player) está (ran
 `(vitorias)` `(derrotas)` `(winrate)` `(jogos)` — também `{var}`. No TFT,
 `(vitorias)` é top 1 e `(derrotas)` é do 2º ao 8º (é como a Riot devolve).
 
+## Endpoints de um comando só
+
+Cada comando do bot chama um endereço que faz uma coisa só (`src/endpoints.js`;
+documentação pública em **elorank-games.com.br/docs**).
+
+| Rota | O que faz | Busca em |
+|---|---|---|
+| `GET /api/tft/elo/nick?player=Nome%23Tag` (ou `/elo/nick/Nome/Tag`) | Elo pelo nick | Riot (sem banco) |
+| `GET /api/tft/elo/puuid/:puuid` | Elo pelo PUUID | Riot (sem banco) |
+| `GET /api/tft/elo/id/:id` | Elo pelo ID EloRank | 1 leitura da `accounts` + Riot |
+| `GET /api/tft/puuid?player=Nome%23Tag` | Só o PUUID | Riot |
+| `GET /api/tft/status` | Saúde da API, do banco e da Riot (`?format=text` para o chat) | banco + da Riot |
+
+Parâmetros: `region` (br1 padrão), `msg`, `format=json`, `mode` (tft, tft_double_up, tft_turbo), `lang`. Texto sai sempre
+com status 200 (o bot imprime até o erro); respostas boas ficam em cache curto.
+
+```
+${customapi https://api.elorank-games.com.br/tft/elo/nick?player=${queryescape ${1:}}&region=br1}
+```
+
 ## Publicar (Cloudflare)
 
 1. **Workers & Pages → Create → Import a repository** → `Asrus21/rank-tft`.
