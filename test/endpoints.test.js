@@ -74,7 +74,7 @@ test("/elo/nick: player=Nome#Tag e nick no caminho, sem tocar no banco", async (
   assert.equal(await txt(app, "/api/tft/elo/nick?player=asrus%23BR1&region=br1"), "asrus está Diamante 2 com 64 pontos");
   assert.deepEqual(chamadas, ["conta:americas", "liga:br1"]);
   assert.equal(await txt(app, "/api/tft/elo/nick/asrus/BR1?mode=tft_turbo&msg=(rank) (pontos)"), "Roxo 3200");
-  assert.equal(await txt(app, "/api/tft/elo/nick?nick=asrus&tag=BR1&lang=en&msg=(rank)"), "DIAMOND 2");
+  assert.equal(await txt(app, "/api/tft/elo/nick?nick=asrus&tag=BR1&lang=en&msg=(rank)"), "Diamond 2");
   assert.ok(!chamadas.includes("schema") && !chamadas.includes("accounts"));
   const res = await app.request("/api/tft/elo/nick/asrus/BR1");
   assert.equal(res.headers.get("cache-control"), "public, max-age=30");
