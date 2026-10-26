@@ -26,7 +26,8 @@ export const MODOS = ["tft", "tft_double_up", "tft_turbo"];
 
 export function traduzirTier(tier, lang = "pt") {
   if (!tier) return lang === "pt" ? "Sem rank" : "Unranked";
-  if (lang === "en") return tier;
+  // Em inglês, o nome da Riot com só a primeira letra maiúscula ("MASTER" → "Master").
+  if (lang === "en") return tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
   return TIER_PT[tier.toUpperCase()] || tier;
 }
 

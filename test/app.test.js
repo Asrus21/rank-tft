@@ -137,7 +137,7 @@ test("comando por ID: account_id, puuid antigo, caminho legado e ID desconhecido
   assert.equal(await porConta.text(), "asrus Diamante 2");
 
   assert.equal(await (await app.request("/cmd/tft/P1?mode=tft_turbo&msg=(rank)")).text(), "Roxo");
-  assert.equal(await (await app.request("/api/tft/cmd/P1?lang=en")).text(), "asrus is DIAMOND 2 with 64 points");
+  assert.equal(await (await app.request("/api/tft/cmd/P1?lang=en")).text(), "asrus is Diamond 2 with 64 points");
 
   const nao = await app.request("/api/tft/cmd/xyz");
   assert.equal(nao.status, 404);

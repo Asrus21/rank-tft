@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#040506">
   <link rel="icon" href="https://elorank-games.com.br/favicon.svg" type="image/svg+xml">
   <!-- Design system compartilhado: o script vem antes do CSS (aplica o tema sem piscar). -->
-  <script src="https://elorank-games.com.br/ds/elorank.js?v=3"></script>
+  <script src="https://elorank-games.com.br/ds/elorank.js?v=4"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
@@ -287,6 +287,8 @@
     const VARS_LIST = ['player', 'tag', 'region', 'modo', 'rank', 'tier', 'divisao', 'pontos', 'vitorias', 'derrotas', 'winrate', 'jogos'];
 
     function lerIdioma() {
+      // Idioma do site inteiro (design system); sem ele, a escolha antiga desta página.
+      if (window.ERIdioma) return window.ERIdioma.atual();
       try { return localStorage.getItem('ranktft_lang') === 'en' ? 'en' : 'pt'; } catch (e) { return 'pt'; }
     }
 
@@ -307,6 +309,7 @@
     function setLang(lang) {
       currentLang = lang;
       try { localStorage.setItem('ranktft_lang', lang); } catch (e) { /* só nesta visita */ }
+      if (window.ERIdioma && window.ERIdioma.atual() !== lang) window.ERIdioma.definir(lang);
       document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
       document.querySelectorAll('[data-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
       document.querySelectorAll('[data-i18n]').forEach((el) => {
